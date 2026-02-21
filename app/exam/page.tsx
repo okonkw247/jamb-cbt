@@ -35,6 +35,7 @@ export default function Exam() {
 
   const [subject, setSubject] = useState(subjectsList[0]);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const cache = useState<{ [key: string]: Question[] }>({})[0];
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<{ [key: number]: string }>({});
   const [flagged, setFlagged] = useState<number[]>([]);
@@ -44,13 +45,19 @@ export default function Exam() {
 
   const fetchQuestions = useCallback(async (subjectName: string) => {
     setLoading(true);
-    setError(false);
-    setCurrent(0);
-    setSelected({});
-    setFlagged([]);
-    try {
-      const key = subjectMap[subjectName] || "english";
-      const res = await fetch(
+setError(false);
+setCurrent(0);
+setSelected({});
+setFlagged([]);
+try {
+  // Check cache first
+  if (cache[subjectName]) {
+    setQuestions(cache[subjectName]);
+    setLoading(false);
+    return;
+  }
+  const key = subjectMap[subjectName] || "english";
+  const res = await fetch(
         `https://questions.aloc.com.ng/api/v2/q/40?subject=${key}&type=utme`,
         {
           headers: {
@@ -64,6 +71,7 @@ export default function Exam() {
         setError(true);
       } else {
         setQuestions(data.data);
+        cache[subjectName] = data.data;
       }
     } catch {
       setError(true);
