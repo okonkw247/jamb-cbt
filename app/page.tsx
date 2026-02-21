@@ -107,7 +107,15 @@ export default function Home() {
           href={`/exam?name=${name}&subjects=${selected.join(",")}`}
           className="block bg-green-500 hover:bg-green-600 text-white text-center py-4 rounded-2xl font-bold text-lg mb-8 transition-colors"
         >
-          Start Mock Exam →
+
+      Start Mock Exam →
+        </a>
+
+        <a
+          href="/history"
+          className="block bg-white border border-gray-200 text-gray-700 text-center py-4 rounded-2xl font-bold text-lg mb-3 transition-colors"
+        >
+          📊 My History
         </a>
 
         <a
