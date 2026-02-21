@@ -1,5 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 const subjects = [
   { name: "Use of English", icon: "📖", required: true, questions: 60, time: "2 hrs" },
@@ -17,8 +20,27 @@ const subjects = [
 ];
 
 export default function Home() {
+  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [name, setName] = useState("");
   const [selected, setSelected] = useState<string[]>(["Use of English"]);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      if (!u) { router.push("/login"); return; }
+      setUser(u);
+      setName(u.displayName || "");
+      setAuthLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  if (authLoading) return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="text-4xl animate-bounce">🎓</div>
+    </div>
+  );
 
   const toggleSubject = (subjectName: string) => {
     if (subjectName === "Use of English") return;
@@ -32,7 +54,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-100 font-sans max-w-md mx-auto">
-      
+
       {/* Header */}
       <div className="bg-gradient-to-br from-green-900 to-green-700 p-6 rounded-b-3xl mb-6">
         <div className="bg-white bg-opacity-20 w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4">
@@ -40,6 +62,12 @@ export default function Home() {
         </div>
         <h1 className="text-white text-2xl font-bold">Welcome, Scholar</h1>
         <p className="text-green-200 text-sm">Ready to ace your JAMB exam?</p>
+        <button
+          onClick={() => signOut(auth).then(() => router.push("/login"))}
+          className="mt-3 bg-white bg-opacity-20 text-white text-xs px-3 py-1.5 rounded-xl"
+        >
+          Sign Out
+        </button>
       </div>
 
       <div className="px-4">
@@ -105,10 +133,9 @@ export default function Home() {
         {/* Start Button */}
         <a
           href={`/exam?name=${name}&subjects=${selected.join(",")}`}
-          className="block bg-green-500 hover:bg-green-600 text-white text-center py-4 rounded-2xl font-bold text-lg mb-8 transition-colors"
+          className="block bg-green-500 hover:bg-green-600 text-white text-center py-4 rounded-2xl font-bold text-lg mb-3 transition-colors"
         >
-
-      Start Mock Exam →
+          Start Mock Exam →
         </a>
 
         <a

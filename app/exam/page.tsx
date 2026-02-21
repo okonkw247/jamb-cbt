@@ -57,15 +57,7 @@ try {
     return;
   }
   const key = subjectMap[subjectName] || "english";
-  const res = await fetch(
-        `https://questions.aloc.com.ng/api/v2/q/40?subject=${key}&type=utme`,
-        {
-          headers: {
-            Accept: "application/json",
-            AccessToken: ACCESS_TOKEN,
-          },
-        }
-      );
+  const res = await fetch(`/api/questions?subject=${encodeURIComponent(subjectName)}`);
       const data = await res.json();
       if (!data.data || data.data.length === 0) {
         setError(true);
@@ -130,9 +122,14 @@ try {
   const answeredCount = Object.keys(selected).length;
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center gap-4">
-      <div className="text-5xl animate-bounce">⏳</div>
-      <p className="text-gray-600 font-medium">Loading {subject} questions...</p>
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center gap-4 px-8">
+      <div className="text-5xl mb-2">📚</div>
+      <p className="text-gray-800 font-bold text-lg">Preparing your exam</p>
+      <p className="text-gray-400 text-sm">Loading {subject} questions...</p>
+      <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
+        <div className="bg-green-500 h-2 rounded-full animate-pulse" style={{ width: "70%" }} />
+      </div>
+      <p className="text-gray-400 text-xs">This may take a few seconds</p>
     </div>
   );
 
