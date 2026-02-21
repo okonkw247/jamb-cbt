@@ -109,6 +109,13 @@ export default function Home() {
         >
           Start Mock Exam →
         </a>
+
+        <a
+          href="/leaderboard"
+          className="block bg-white border border-gray-200 text-gray-700 text-center py-4 rounded-2xl font-bold text-lg mb-8 transition-colors"
+        >
+          🏆 Leaderboard
+        </a>
       </div>
     </div>
   );
