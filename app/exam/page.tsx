@@ -100,9 +100,15 @@ export default function Exam() {
 
   const handleSubmit = () => {
     const score = questions.filter((q, i) => selected[i] === q.answer).length;
-    router.push(
-      `/results?name=${encodeURIComponent(name)}&score=${score}&total=${questions.length}&subject=${encodeURIComponent(subject)}`
-    );
+    sessionStorage.setItem("examResult", JSON.stringify({
+      name,
+      subject,
+      score,
+      total: questions.length,
+      questions,
+      selected,
+    }));
+    router.push(`/results`);
   };
 
   const toggleFlag = () => {
