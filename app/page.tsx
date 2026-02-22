@@ -37,8 +37,48 @@ export default function Home() {
   }, []);
 
   if (authLoading) return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="text-4xl animate-bounce">🎓</div>
+    <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-green-700 flex flex-col items-center justify-center px-6 font-sans">
+      <img src="/logo.svg" alt="JAMB CBT" className="w-32 h-32 mb-6 rounded-3xl shadow-2xl" />
+      <h1 className="text-white text-3xl font-bold text-center mb-2">JAMB CBT Practice</h1>
+      <p className="text-green-200 text-center mb-8">Prepare. Practice. Pass.</p>
+
+      <div className="flex flex-col gap-3 w-full max-w-xs">
+        <div className="flex items-center gap-3 bg-white bg-opacity-10 rounded-2xl p-4">
+          <span className="text-2xl">📚</span>
+          <div>
+            <p className="text-white font-semibold text-sm">Real JAMB Questions</p>
+            <p className="text-green-200 text-xs">Past questions from all subjects</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 bg-white bg-opacity-10 rounded-2xl p-4">
+          <span className="text-2xl">⏱</span>
+          <div>
+            <p className="text-white font-semibold text-sm">Timed Practice</p>
+            <p className="text-green-200 text-xs">Simulate real exam conditions</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 bg-white bg-opacity-10 rounded-2xl p-4">
+          <span className="text-2xl">📊</span>
+          <div>
+            <p className="text-white font-semibold text-sm">Track Progress</p>
+            <p className="text-green-200 text-xs">See your scores and improvements</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 bg-white bg-opacity-10 rounded-2xl p-4">
+          <span className="text-2xl">🧮</span>
+          <div>
+            <p className="text-white font-semibold text-sm">Built-in Calculator</p>
+            <p className="text-green-200 text-xs">For Mathematics questions</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 flex items-center gap-2">
+        <div className="w-2 h-2 bg-green-300 rounded-full animate-bounce" style={{animationDelay: "0ms"}}></div>
+        <div className="w-2 h-2 bg-green-300 rounded-full animate-bounce" style={{animationDelay: "150ms"}}></div>
+        <div className="w-2 h-2 bg-green-300 rounded-full animate-bounce" style={{animationDelay: "300ms"}}></div>
+      </div>
+      <p className="text-green-300 text-xs mt-3">Made by Adams X Project</p>
     </div>
   );
 
