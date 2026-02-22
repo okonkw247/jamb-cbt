@@ -42,6 +42,33 @@ export default function Exam() {
   const [timeLeft, setTimeLeft] = useState(2 * 60 * 60);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [showCalc, setShowCalc] = useState(false);
+  const [calcDisplay, setCalcDisplay] = useState("0");
+  const [calcExpression, setCalcExpression] = useState("");
+  const [calcEvaluated, setCalcEvaluated] = useState(false);
+
+const calcNumber = (val: string) => {
+  if (calcEvaluated) { setCalcDisplay(val); setCalcExpression(val); setCalcEvaluated(false); return; }
+  setCalcDisplay(calcDisplay === "0" ? val : calcDisplay + val);
+  setCalcExpression(calcExpression + val);
+};
+const calcOperator = (op: string) => { setCalcEvaluated(false); setCalcExpression(calcExpression + op); setCalcDisplay(op); };
+const calcEquals = () => {
+  try {
+    const result = Function('"use strict"; return (' + calcExpression + ')')();
+    const rounded = Math.round(result * 1000000) / 1000000;
+    setCalcDisplay(String(rounded));
+    setCalcExpression(String(rounded));
+    setCalcEvaluated(true);
+  } catch { setCalcDisplay("Error"); setCalcExpression(""); }
+};
+const calcClear = () => { setCalcDisplay("0"); setCalcExpression(""); setCalcEvaluated(false); };
+const calcBack = () => {
+  if (calcDisplay.length === 1) { setCalcDisplay("0"); return; }
+  setCalcDisplay(calcDisplay.slice(0, -1));
+  setCalcExpression(calcExpression.slice(0, -1));
+};
+
 
   const fetchQuestions = useCallback(async (subjectName: string) => {
     setLoading(true);
@@ -297,6 +324,58 @@ try {
           </button>
         </div>
       </div>
+    {/* Floating Calculator Button */}
+      <button
+        onClick={() => setShowCalc(!showCalc)}
+        className="fixed bottom-6 right-6 bg-green-500 text-white w-14 h-14 rounded-full text-2xl shadow-lg z-50"
+      >
+        🧮
+      </button>
+
+      {/* Calculator Popup */}
+      {showCalc && (
+        <div className="fixed bottom-24 right-4 bg-white rounded-2xl shadow-2xl p-4 z-50 w-72">
+          <div className="flex justify-between items-center mb-3">
+            <p className="font-bold text-gray-700">Calculator</p>
+            <button onClick={() => setShowCalc(false)} className="text-gray-400 text-xl">✕</button>
+          </div>
+          <div className="bg-gray-900 rounded-xl p-3 mb-3">
+            <p className="text-gray-400 text-xs text-right">{calcExpression || " "}</p>
+            <p className="text-white text-2xl text-right font-light">{calcDisplay}</p>
+          </div>
+          <div className="grid grid-cols-4 gap-1.5">
+            {[
+              ["AC", () => calcClear(), "bg-red-100 text-red-600"],
+              ["⌫", () => calcBack(), "bg-orange-100 text-orange-600"],
+              ["%", () => { const n = parseFloat(calcDisplay)/100; setCalcDisplay(String(n)); setCalcExpression(String(n)); }, "bg-gray-100 text-gray-600"],
+              ["÷", () => calcOperator("/"), "bg-orange-400 text-white"],
+              ["7", () => calcNumber("7"), "bg-gray-50 text-gray-800"],
+              ["8", () => calcNumber("8"), "bg-gray-50 text-gray-800"],
+              ["9", () => calcNumber("9"), "bg-gray-50 text-gray-800"],
+              ["×", () => calcOperator("*"), "bg-orange-400 text-white"],
+              ["4", () => calcNumber("4"), "bg-gray-50 text-gray-800"],
+              ["5", () => calcNumber("5"), "bg-gray-50 text-gray-800"],
+              ["6", () => calcNumber("6"), "bg-gray-50 text-gray-800"],
+              ["−", () => calcOperator("-"), "bg-orange-400 text-white"],
+              ["1", () => calcNumber("1"), "bg-gray-50 text-gray-800"],
+              ["2", () => calcNumber("2"), "bg-gray-50 text-gray-800"],
+              ["3", () => calcNumber("3"), "bg-gray-50 text-gray-800"],
+              ["+", () => calcOperator("+"), "bg-orange-400 text-white"],
+              ["0", () => calcNumber("0"), "bg-gray-50 text-gray-800 col-span-2"],
+              [".", () => { if (!calcDisplay.includes(".")) { setCalcDisplay(calcDisplay+"."); setCalcExpression(calcExpression+"."); }}, "bg-gray-50 text-gray-800"],
+              ["=", () => calcEquals(), "bg-green-500 text-white"],
+            ].map(([label, onClick, style]) => (
+              <button
+                key={String(label)}
+                onClick={onClick as () => void}
+                className={`${style} h-10 rounded-xl text-sm font-semibold active:scale-95 transition-all`}
+              >
+                {String(label)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
-  );
-}
+    );
+ } 
