@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+
 export const metadata: Metadata = {
   title: "JAMB CBT Practice - Prepare, Practice, Pass",
   description: "Free JAMB CBT practice app with real past questions for all subjects. Practice anytime, anywhere!",
@@ -17,11 +18,12 @@ export const metadata: Metadata = {
     title: "JAMB CBT Practice",
     description: "Free JAMB CBT practice with real past questions!",
   },
-
-    icons: {
-  icon: "/logo.svg",
-  apple: "/logo.svg",
-},
+  icons: {
+    icon: "/logo.svg",
+    shortcut: "/logo.svg",
+    apple: "/logo.svg",
+  },
+};
 
 
 export default function RootLayout({
