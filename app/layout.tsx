@@ -17,7 +17,12 @@ export const metadata: Metadata = {
     title: "JAMB CBT Practice",
     description: "Free JAMB CBT practice with real past questions!",
   },
-};
+
+    icons: {
+  icon: "/logo.svg",
+  apple: "/logo.svg",
+},
+
 
 export default function RootLayout({
   children,
