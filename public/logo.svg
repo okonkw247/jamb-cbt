@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <!-- Background circle -->
+  <circle cx="200" cy="200" r="200" fill="#1a5c2a"/>
+  
+  <!-- Inner circle -->
+  <circle cx="200" cy="160" r="100" fill="none" stroke="#ffffff" stroke-width="8"/>
+  
+  <!-- Graduation cap top -->
+  <polygon points="200,80 300,130 200,155 100,130" fill="#ffffff"/>
+  
+  <!-- Graduation cap base -->
+  <rect x="160" y="150" width="80" height="12" fill="#ffffff" rx="4"/>
+  
+  <!-- Tassel -->
+  <line x1="300" y1="130" x2="300" y2="175" stroke="#f0c040" stroke-width="4"/>
+  <circle cx="300" cy="180" r="8" fill="#f0c040"/>
+  
+  <!-- Book -->
+  <rect x="155" y="170" width="90" height="65" rx="4" fill="#f0c040"/>
+  <line x1="200" y1="170" x2="200" y2="235" stroke="#1a5c2a" stroke-width="3"/>
+  <line x1="165" y1="185" x2="197" y2="185" stroke="#1a5c2a" stroke-width="2"/>
+  <line x1="165" y1="197" x2="197" y2="197" stroke="#1a5c2a" stroke-width="2"/>
+  <line x1="165" y1="209" x2="197" y2="209" stroke="#1a5c2a" stroke-width="2"/>
+  <line x1="203" y1="185" x2="235" y2="185" stroke="#1a5c2a" stroke-width="2"/>
+  <line x1="203" y1="197" x2="235" y2="197" stroke="#1a5c2a" stroke-width="2"/>
+  <line x1="203" y1="209" x2="235" y2="209" stroke="#1a5c2a" stroke-width="2"/>
+
+  <!-- App name -->
+  <text x="200" y="285" font-family="Arial" font-weight="bold" font-size="36" fill="#ffffff" text-anchor="middle">JAMB CBT</text>
+  
+  <!-- Tagline -->
+  <text x="200" y="318" font-family="Arial" font-size="14" fill="#90ee90" text-anchor="middle">Prepare • Practice • Pass</text>
+
+  <!-- Bottom branding -->
+  <rect x="80" y="335" width="240" height="36" rx="18" fill="#ffffff" fill-opacity="0.15"/>
+  <text x="200" y="358" font-family="Arial" font-size="13" fill="#ffffff" text-anchor="middle">Made by Adams X Project</text>
+</svg>

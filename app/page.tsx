@@ -57,9 +57,8 @@ export default function Home() {
 
       {/* Header */}
       <div className="bg-gradient-to-br from-green-900 to-green-700 p-6 rounded-b-3xl mb-6">
-        <div className="bg-white bg-opacity-20 w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4">
-          🎓
-        </div>
+        <img src="/logo.svg" alt="JAMB CBT Logo" className="w-20 h-20 mb-4 rounded-2xl" />
+
         <h1 className="text-white text-2xl font-bold">Welcome, Scholar</h1>
         <p className="text-green-200 text-sm">Ready to ace your JAMB exam?</p>
         <button
