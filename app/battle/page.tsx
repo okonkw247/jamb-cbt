@@ -593,13 +593,20 @@ if (showIntro && room) {
         >
           📲 Share
         </button>
-        {room?.host === playerId && (
-          <button
-            onClick={rematch}
-            className="flex-1 bg-yellow-400 text-gray-900 py-3 rounded-2xl font-bold"
-          >
-            🔄 Rematch
-          </button>
+
+        <button
+  onClick={() => {
+    if (room?.host !== playerId) {
+      alert("Only the host can start a rematch!");
+      return;
+    }
+    rematch();
+  }}
+  className="flex-1 bg-yellow-400 text-gray-900 py-3 rounded-2xl font-bold"
+>
+  🔄 Rematch
+</button>      
+
         )}
       </div>
       <a href="/" className="w-full bg-white bg-opacity-20 text-white py-3 rounded-2xl font-bold text-center">
