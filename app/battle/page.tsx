@@ -1,13 +1,14 @@
 "use client";
-import { useState, useEffect } from "react";
-import { db, auth } from "@/lib/firebase";
-import { ref, set, onValue, push, update } from "firebase/database";
+import { useState, useEffect, useRef } from "react";
+import { db } from "@/lib/firebase";
+import { ref, set, onValue, push, update, get } from "firebase/database";
 import { useRouter } from "next/navigation";
 
 interface Player {
   name: string;
   score: number;
   answered: number;
+  streak: number;
   ready: boolean;
 }
 
@@ -17,8 +18,11 @@ interface Room {
   status: "waiting" | "playing" | "finished";
   players: { [key: string]: Player };
   questions: any[];
-  currentQuestion: number;
+  reactions: { [key: string]: { emoji: string; name: string; time: number } };
 }
+
+const EMOJIS = ["🔥", "😂", "👏", "😱", "💪", "🎯"];
+const REACTION_DURATION = 2000;
 
 export default function Battle() {
   const router = useRouter();
@@ -33,6 +37,13 @@ export default function Battle() {
   const [timeLeft, setTimeLeft] = useState(15);
   const [subject, setSubject] = useState("Use of English");
   const [loading, setLoading] = useState(false);
+  const [visibleReactions, setVisibleReactions] = useState<{ emoji: string; name: string; id: string }[]>([]);
+  const [fiftyUsed, setFiftyUsed] = useState(false);
+  const [hiddenOptions, setHiddenOptions] = useState<string[]>([]);
+  const [answerTime, setAnswerTime] = useState(15);
+  const [showStreak, setShowStreak] = useState(false);
+  const [streakCount, setStreakCount] = useState(0);
+  const timerRef = useRef<any>(null);
 
   const subjects = [
     "Use of English", "Mathematics", "Physics",
@@ -48,13 +59,31 @@ export default function Battle() {
       const data = snapshot.val();
       if (!data) return;
       setRoom(data);
+
       if (data.status === "playing" && screen === "waiting") {
         setScreen("playing");
         setCurrentIndex(0);
         setTimeLeft(15);
+        setAnswerTime(15);
       }
-      if (data.status === "finished") {
+      if (data.status === "finished" && screen === "playing") {
         setScreen("finished");
+      }
+      if (data.status === "waiting" && screen === "finished") {
+        setScreen("waiting");
+        setCurrentIndex(0);
+        setSelected(null);
+        setFiftyUsed(false);
+        setHiddenOptions([]);
+      }
+
+      // Handle reactions
+      if (data.reactions) {
+        const now = Date.now();
+        const fresh = Object.entries(data.reactions)
+          .filter(([_, r]: any) => now - r.time < REACTION_DURATION)
+          .map(([id, r]: any) => ({ id, emoji: r.emoji, name: r.name }));
+        setVisibleReactions(fresh);
       }
     });
     return () => unsub();
@@ -63,13 +92,19 @@ export default function Battle() {
   // Question timer
   useEffect(() => {
     if (screen !== "playing") return;
-    if (timeLeft <= 0) {
-      handleNextQuestion();
-      return;
-    }
-    const timer = setInterval(() => setTimeLeft((p) => p - 1), 1000);
-    return () => clearInterval(timer);
-  }, [screen, timeLeft]);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTimeLeft((p) => {
+        if (p <= 1) {
+          clearInterval(timerRef.current);
+          handleNextQuestion();
+          return 0;
+        }
+        return p - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [screen, currentIndex]);
 
   const generateCode = () => Math.random().toString(36).substring(2, 7).toUpperCase();
 
@@ -88,9 +123,9 @@ export default function Battle() {
         subject,
         status: "waiting",
         questions,
-        currentQuestion: 0,
+        reactions: {},
         players: {
-          [pid]: { name: playerName, score: 0, answered: 0, ready: true }
+          [pid]: { name: playerName, score: 0, answered: 0, streak: 0, ready: true }
         }
       });
 
@@ -110,23 +145,23 @@ export default function Battle() {
     setLoading(true);
     try {
       const pid = generateCode();
-      const roomRef = ref(db, `battles/${inputCode.toUpperCase()}`);
-      const snapshot = await new Promise<any>((resolve) => onValue(roomRef, resolve, { onlyOnce: true }));
+      const code = inputCode.toUpperCase();
+      const snapshot = await get(ref(db, `battles/${code}`));
       const data = snapshot.val();
 
-      if (!data) return alert("Room not found!");
-      if (data.status !== "waiting") return alert("Game already started!");
-      if (Object.keys(data.players).length >= 4) return alert("Room is full!");
+      if (!data) { alert("Room not found!"); setLoading(false); return; }
+      if (data.status !== "waiting") { alert("Game already started!"); setLoading(false); return; }
+      if (Object.keys(data.players).length >= 4) { alert("Room is full!"); setLoading(false); return; }
 
-      await update(ref(db, `battles/${inputCode.toUpperCase()}/players/${pid}`), {
-        name: playerName, score: 0, answered: 0, ready: true
+      await update(ref(db, `battles/${code}/players/${pid}`), {
+        name: playerName, score: 0, answered: 0, streak: 0, ready: true
       });
 
-      setRoomCode(inputCode.toUpperCase());
+      setRoomCode(code);
       setPlayerId(pid);
       setScreen("waiting");
     } catch (err) {
-      alert("Failed to join room. Try again.");
+      alert("Failed to join room.");
     } finally {
       setLoading(false);
     }
@@ -134,22 +169,38 @@ export default function Battle() {
 
   const startGame = async () => {
     if (!room) return;
-    const players = Object.keys(room.players);
-    if (players.length < 2) return alert("Need at least 2 players to start!");
+    if (Object.keys(room.players).length < 2) return alert("Need at least 2 players!");
     await update(ref(db, `battles/${roomCode}`), { status: "playing" });
   };
 
   const handleAnswer = async (opt: string) => {
     if (selected || !room) return;
     setSelected(opt);
+    clearInterval(timerRef.current);
+
     const q = room.questions[currentIndex];
     const isCorrect = opt === q.answer;
-    const currentScore = room.players[playerId]?.score || 0;
-    const currentAnswered = room.players[playerId]?.answered || 0;
+    const player = room.players[playerId];
+    const currentScore = player?.score || 0;
+    const currentStreak = player?.streak || 0;
+    const currentAnswered = player?.answered || 0;
+
+    // Speed bonus — faster answer = more points
+    const timeBonus = Math.floor(timeLeft / 3);
+    const streakBonus = isCorrect ? Math.floor(currentStreak / 2) : 0;
+    const pointsEarned = isCorrect ? 1 + timeBonus + streakBonus : 0;
+    const newStreak = isCorrect ? currentStreak + 1 : 0;
+
+    if (isCorrect && newStreak >= 3) {
+      setShowStreak(true);
+      setStreakCount(newStreak);
+      setTimeout(() => setShowStreak(false), 2000);
+    }
 
     await update(ref(db, `battles/${roomCode}/players/${playerId}`), {
-      score: isCorrect ? currentScore + 1 : currentScore,
+      score: currentScore + pointsEarned,
       answered: currentAnswered + 1,
+      streak: newStreak,
     });
   };
 
@@ -163,16 +214,66 @@ export default function Battle() {
     setCurrentIndex(nextIndex);
     setSelected(null);
     setTimeLeft(15);
+    setAnswerTime(15);
+    setHiddenOptions([]);
+  };
+
+  const useFiftyFifty = () => {
+    if (fiftyUsed || !room || selected) return;
+    const q = room.questions[currentIndex];
+    const wrong = (["a", "b", "c", "d"] as const).filter(o => o !== q.answer);
+    const toHide = wrong.sort(() => Math.random() - 0.5).slice(0, 2);
+    setHiddenOptions(toHide);
+    setFiftyUsed(true);
+  };
+
+  const sendReaction = async (emoji: string) => {
+    if (!roomCode || !playerName) return;
+    const id = generateCode();
+    await update(ref(db, `battles/${roomCode}/reactions/${id}`), {
+      emoji,
+      name: playerName,
+      time: Date.now(),
+    });
+  };
+
+  const rematch = async () => {
+    if (!room || room.host !== playerId) return;
+    const res = await fetch(`/api/questions?subject=${encodeURIComponent(room.subject)}`);
+    const data = await res.json();
+    const questions = (data.data || []).slice(0, 10);
+
+    // Reset all players scores
+    const resetPlayers: any = {};
+    Object.keys(room.players).forEach((pid) => {
+      resetPlayers[pid] = { ...room.players[pid], score: 0, answered: 0, streak: 0 };
+    });
+
+    await update(ref(db, `battles/${roomCode}`), {
+      status: "waiting",
+      questions,
+      reactions: {},
+      players: resetPlayers,
+    });
+  };
+
+  const shareResult = () => {
+    const players = getPlayers();
+    const winner = players[0];
+    const me = players.find(p => p.id === playerId);
+    const rank = players.findIndex(p => p.id === playerId) + 1;
+    const msg = `⚔️ JAMB CBT Battle Result!\n🏆 Winner: ${winner.name} (${winner.score} pts)\n\nMy rank: #${rank} - ${me?.name} (${me?.score} pts)\n\nChallenge me at: https://jamb-cbt-chi.vercel.app/battle`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
   };
 
   const getPlayers = () => {
     if (!room) return [];
     return Object.entries(room.players)
-      .map(([id, p]) => ({ id, ...p }))
+      .map(([id, p]) => ({ id, ...p as Player }))
       .sort((a, b) => b.score - a.score);
   };
 
-  // LOBBY SCREEN
+  // LOBBY
   if (screen === "lobby") return (
     <div className="min-h-screen bg-gray-100 font-sans max-w-md mx-auto">
       <div className="bg-gradient-to-br from-purple-700 to-indigo-700 p-6 rounded-b-3xl mb-6">
@@ -180,9 +281,7 @@ export default function Battle() {
         <h1 className="text-white text-2xl font-bold">⚔️ Quiz Battle</h1>
         <p className="text-purple-200 text-sm">Challenge friends in real time!</p>
       </div>
-
       <div className="px-4">
-        {/* Name input */}
         <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
           <p className="text-gray-700 font-semibold mb-2">Your Name</p>
           <input
@@ -193,8 +292,6 @@ export default function Battle() {
             className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none text-gray-700"
           />
         </div>
-
-        {/* Create room */}
         <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
           <p className="text-gray-700 font-semibold mb-2">Select Subject</p>
           <select
@@ -202,9 +299,7 @@ export default function Battle() {
             onChange={(e) => setSubject(e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none text-gray-700 mb-3"
           >
-            {subjects.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
+            {subjects.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           <button
             onClick={createRoom}
@@ -214,8 +309,6 @@ export default function Battle() {
             {loading ? "Creating..." : "⚔️ Create Battle Room"}
           </button>
         </div>
-
-        {/* Join room */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <p className="text-gray-700 font-semibold mb-2">Join a Room</p>
           <input
@@ -238,22 +331,18 @@ export default function Battle() {
     </div>
   );
 
-  // WAITING SCREEN
+  // WAITING
   if (screen === "waiting") return (
     <div className="min-h-screen bg-gradient-to-br from-purple-700 to-indigo-700 font-sans max-w-md mx-auto flex flex-col items-center justify-center px-6">
       <h2 className="text-white text-2xl font-bold mb-2">Waiting for players...</h2>
       <p className="text-purple-200 mb-6">Share this code with friends</p>
-
-      {/* Room code */}
       <div className="bg-white rounded-3xl px-10 py-6 mb-8 text-center">
         <p className="text-gray-400 text-sm mb-1">Room Code</p>
         <p className="text-gray-800 text-5xl font-bold tracking-widest">{roomCode}</p>
       </div>
-
-      {/* Players */}
       <div className="w-full bg-white bg-opacity-10 rounded-2xl p-4 mb-6">
         <p className="text-white font-semibold mb-3">Players ({Object.keys(room?.players || {}).length}/4)</p>
-        {getPlayers().map((p, i) => (
+        {getPlayers().map((p) => (
           <div key={p.id} className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white font-bold text-sm">
               {p.name[0].toUpperCase()}
@@ -263,66 +352,101 @@ export default function Battle() {
           </div>
         ))}
       </div>
-
-      {/* Start button (host only) */}
-      {room?.host === playerId && (
-        <button
-          onClick={startGame}
-          className="w-full bg-yellow-400 text-gray-900 py-4 rounded-2xl font-bold text-lg mb-3"
-        >
+      {room?.host === playerId ? (
+        <button onClick={startGame} className="w-full bg-yellow-400 text-gray-900 py-4 rounded-2xl font-bold text-lg mb-3">
           🎮 Start Game!
         </button>
-      )}
-      {room?.host !== playerId && (
+      ) : (
         <p className="text-purple-200 text-sm">Waiting for host to start...</p>
       )}
     </div>
   );
 
-  // PLAYING SCREEN
+  // PLAYING
   if (screen === "playing" && room) {
     const q = room.questions[currentIndex];
     const options = ["a", "b", "c", "d"] as const;
 
     return (
-      <div className="min-h-screen bg-gray-100 font-sans max-w-md mx-auto pb-10">
+      <div className="min-h-screen bg-gray-100 font-sans max-w-md mx-auto pb-10 relative">
+        {/* Streak notification */}
+        {showStreak && (
+          <div className="fixed top-20 left-0 right-0 flex justify-center z-50">
+            <div className="bg-yellow-400 text-gray-900 px-6 py-3 rounded-2xl font-bold text-lg shadow-xl animate-bounce">
+              🔥 {streakCount}x Streak! Bonus points!
+            </div>
+          </div>
+        )}
+
+        {/* Floating reactions */}
+        <div className="fixed top-32 left-4 z-40 flex flex-col gap-2">
+          {visibleReactions.map((r) => (
+            <div key={r.id} className="bg-white rounded-xl px-3 py-1.5 shadow-md flex items-center gap-2 animate-bounce">
+              <span className="text-xl">{r.emoji}</span>
+              <span className="text-gray-600 text-xs">{r.name}</span>
+            </div>
+          ))}
+        </div>
+
         {/* Header */}
-        <div className="bg-purple-700 p-4">
+        <div className="bg-purple-700 p-4 sticky top-0 z-10">
           <div className="flex justify-between items-center mb-2">
-            <p className="text-white font-bold">Question {currentIndex + 1}/{room.questions.length}</p>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${timeLeft <= 5 ? "bg-red-500 text-white" : "bg-white text-purple-700"}`}>
+            <p className="text-white font-bold">Q {currentIndex + 1}/{room.questions.length}</p>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${timeLeft <= 5 ? "bg-red-500 text-white animate-pulse" : "bg-white text-purple-700"}`}>
               {timeLeft}
             </div>
           </div>
-          {/* Progress bar */}
-          <div className="w-full bg-purple-900 rounded-full h-2">
+          <div className="w-full bg-purple-900 rounded-full h-2 mb-2">
             <div
               className="bg-yellow-400 h-2 rounded-full transition-all"
               style={{ width: `${((currentIndex + 1) / room.questions.length) * 100}%` }}
             />
           </div>
-        </div>
-
-        {/* Live scores */}
-        <div className="bg-purple-600 px-4 py-2 flex gap-3 overflow-x-auto">
-          {getPlayers().map((p, i) => (
-            <div key={p.id} className="flex-shrink-0 flex items-center gap-2 bg-white bg-opacity-20 rounded-xl px-3 py-1.5">
-              <span className="text-white text-xs font-bold">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🏅"}</span>
-              <span className="text-white text-xs">{p.name.split(" ")[0]}</span>
-              <span className="text-yellow-300 text-xs font-bold">{p.score}</span>
-            </div>
-          ))}
+          {/* Live scores */}
+          <div className="flex gap-2 overflow-x-auto mt-2">
+            {getPlayers().map((p, i) => (
+              <div key={p.id} className={`flex-shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 ${p.id === playerId ? "bg-yellow-400" : "bg-white bg-opacity-20"}`}>
+                <span className="text-xs">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🏅"}</span>
+                <span className={`text-xs font-medium ${p.id === playerId ? "text-gray-900" : "text-white"}`}>{p.name.split(" ")[0]}</span>
+                <span className={`text-xs font-bold ${p.id === playerId ? "text-gray-900" : "text-yellow-300"}`}>{p.score}</span>
+                {(p.streak || 0) >= 2 && <span className="text-xs">🔥{p.streak}</span>}
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="px-4 py-4">
+          {/* Power ups */}
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={useFiftyFifty}
+              disabled={fiftyUsed || !!selected}
+              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${fiftyUsed ? "bg-gray-200 text-gray-400" : "bg-indigo-100 text-indigo-700"}`}
+            >
+              {fiftyUsed ? "✓ Used" : "⚡ 50/50"}
+            </button>
+            <div className="flex gap-1">
+              {EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => sendReaction(emoji)}
+                  className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm text-lg"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Question */}
           <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
             <p className="text-gray-800 leading-relaxed" dangerouslySetInnerHTML={{ __html: q.question }} />
           </div>
 
           {/* Options */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 mb-4">
             {options.map((opt) => {
+              if (hiddenOptions.includes(opt)) return null;
               let style = "bg-white border-2 border-transparent";
               if (selected) {
                 if (opt === q.answer) style = "bg-green-100 border-2 border-green-500";
@@ -345,43 +469,73 @@ export default function Battle() {
           </div>
 
           {selected && (
-            <button
-              onClick={handleNextQuestion}
-              className="w-full mt-4 bg-purple-600 text-white py-4 rounded-2xl font-bold text-lg"
-            >
-              Next →
-            </button>
+            <div className="mb-4">
+              <div className={`rounded-2xl p-3 mb-3 text-center ${selected === room.questions[currentIndex].answer ? "bg-green-100" : "bg-red-100"}`}>
+                <p className={`font-bold ${selected === room.questions[currentIndex].answer ? "text-green-700" : "text-red-700"}`}>
+                  {selected === room.questions[currentIndex].answer
+                    ? `✓ Correct! +${1 + Math.floor(timeLeft/3) + Math.floor((room.players[playerId]?.streak || 0) / 2)} pts`
+                    : "✗ Wrong!"}
+                </p>
+              </div>
+              <button
+                onClick={handleNextQuestion}
+                className="w-full bg-purple-600 text-white py-4 rounded-2xl font-bold text-lg"
+              >
+                Next →
+              </button>
+            </div>
           )}
         </div>
       </div>
     );
   }
 
-  // FINISHED SCREEN
+
+// FINISHED
   if (screen === "finished") return (
     <div className="min-h-screen bg-gradient-to-br from-purple-700 to-indigo-700 font-sans max-w-md mx-auto flex flex-col items-center justify-center px-6">
       <h1 className="text-white text-3xl font-bold mb-2">🏆 Battle Over!</h1>
-      <p className="text-purple-200 mb-8">Final Rankings</p>
+      <p className="text-purple-200 mb-6">Final Rankings</p>
 
-      <div className="w-full flex flex-col gap-3 mb-8">
+      <div className="w-full flex flex-col gap-3 mb-6">
         {getPlayers().map((p, i) => (
           <div
             key={p.id}
             className={`flex items-center gap-4 rounded-2xl p-4 ${
-              i === 0 ? "bg-yellow-400" : "bg-white bg-opacity-20"
-            }`}
+              p.id === playerId ? "border-2 border-yellow-300" : ""
+            } ${i === 0 ? "bg-yellow-400" : "bg-white bg-opacity-20"}`}
           >
             <span className="text-2xl">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🏅"}</span>
             <div className="flex-1">
-              <p className={`font-bold ${i === 0 ? "text-gray-900" : "text-white"}`}>{p.name}</p>
-              <p className={`text-sm ${i === 0 ? "text-gray-700" : "text-purple-200"}`}>{p.answered} answered</p>
+              <p className={`font-bold ${i === 0 ? "text-gray-900" : "text-white"}`}>
+                {p.name} {p.id === playerId ? "(You)" : ""}
+              </p>
+              <p className={`text-xs ${i === 0 ? "text-gray-700" : "text-purple-200"}`}>
+                {p.answered} answered · 🔥 Best streak: {p.streak}
+              </p>
             </div>
-            <p className={`text-2xl font-bold ${i === 0 ? "text-gray-900" : "text-white"}`}>{p.score}</p>
+            <p className={`text-2xl font-bold ${i === 0 ? "text-gray-900" : "text-white"}`}>{p.score} pts</p>
           </div>
         ))}
       </div>
 
-      <a href="/" className="w-full bg-white text-purple-700 py-4 rounded-2xl font-bold text-lg text-center">
+      <div className="flex gap-3 w-full mb-4">
+        <button
+          onClick={shareResult}
+          className="flex-1 bg-green-500 text-white py-3 rounded-2xl font-bold"
+        >
+          📲 Share
+        </button>
+        {room?.host === playerId && (
+          <button
+            onClick={rematch}
+            className="flex-1 bg-yellow-400 text-gray-900 py-3 rounded-2xl font-bold"
+          >
+            🔄 Rematch
+          </button>
+        )}
+      </div>
+      <a href="/" className="w-full bg-white bg-opacity-20 text-white py-3 rounded-2xl font-bold text-center">
         🏠 Go Home
       </a>
     </div>
