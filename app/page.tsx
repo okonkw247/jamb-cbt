@@ -196,6 +196,12 @@ export default function Home() {
         >
           🏆 Leaderboard
         </a>
+      <a
+  href="/global-leaderboard"
+  className="block bg-yellow-400 text-white text-center py-4 rounded-2xl font-bold text-lg mb-3 transition-colors"
+>
+  🌍 Global Leaderboard
+</a>
       </div>
     </div>
   );
