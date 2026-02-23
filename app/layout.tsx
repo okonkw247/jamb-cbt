@@ -28,11 +28,13 @@ export const metadata: Metadata = {
     title: "JAMB CBT Practice",
     description: "Free JAMB CBT practice with real past questions!",
   },
+
   icons: {
-    icon: "/logo.svg",
-    shortcut: "/logo.svg",
-    apple: "/logo.svg",
-  },
+  icon: "/logo.png?v=2",
+  shortcut: "/logo.png?v=2",
+  apple: "/logo.png?v=2",
+ },
+
 };
 
 
