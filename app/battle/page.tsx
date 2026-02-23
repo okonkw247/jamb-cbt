@@ -606,8 +606,6 @@ if (showIntro && room) {
 >
   🔄 Rematch
 </button>      
-
-        )}
       </div>
       <a href="/" className="w-full bg-white bg-opacity-20 text-white py-3 rounded-2xl font-bold text-center">
         🏠 Go Home
