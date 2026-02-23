@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://jamb-cbt-chi.vercel.app/logo.svg",
+        url: "https://jamb-cbt-chi.vercel.app/og-image.png",
         width: 400,
         height: 400,
         alt: "JAMB CBT Practice Logo",

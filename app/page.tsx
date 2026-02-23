@@ -38,7 +38,7 @@ export default function Home() {
 
   if (authLoading) return (
     <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-green-700 flex flex-col items-center justify-center px-6 font-sans">
-      <img src="/logo.svg" alt="JAMB CBT" className="w-32 h-32 mb-6 rounded-3xl shadow-2xl" />
+      <img src="/logo.png" alt="JAMB CBT Logo" className="w-20 h-20 mb-4 rounded-2xl" />
       <h1 className="text-white text-3xl font-bold text-center mb-2">JAMB CBT Practice</h1>
       <p className="text-green-200 text-center mb-8">Prepare. Practice. Pass.</p>
 
