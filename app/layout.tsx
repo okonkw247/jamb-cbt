@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-
+import InstallPrompt from "@/components/InstallPrompt";
 
 export const metadata: Metadata = {
   title: "JAMB CBT Practice - Prepare, Practice, Pass",
@@ -38,6 +38,10 @@ export const metadata: Metadata = {
 
 };
 
+export const viewport = {
+  themeColor: "#1a5c2a",
+};
+
 
 export default function RootLayout({
   children,
@@ -46,8 +50,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+    <link rel="manifest" href="/manifest.json" />
       <body>
         {children}
+       <InstallPrompt />
       </body>
     </html>
   );
