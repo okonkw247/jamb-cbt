@@ -29,11 +29,12 @@ export const metadata: Metadata = {
     description: "Free JAMB CBT practice with real past questions!",
   },
 
-  icons: {
-  icon: "/logo.png?v=2",
-  shortcut: "/logo.png?v=2",
-  apple: "/logo.png?v=2",
- },
+ icons: {
+  icon: "/favicon.ico",
+  shortcut: "/favicon.ico",
+  apple: "/logo.png",
+
+  },
 
 };
 
