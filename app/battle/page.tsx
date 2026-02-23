@@ -44,6 +44,42 @@ export default function Battle() {
   const [showStreak, setShowStreak] = useState(false);
   const [streakCount, setStreakCount] = useState(0);
   const timerRef = useRef<any>(null);
+  const [showIntro, setShowIntro] = useState(false);
+  const [introIndex, setIntroIndex] = useState(0);
+  const correctSound = useRef<any>(null);
+const wrongSound = useRef<any>(null);
+const tickSound = useRef<any>(null);
+
+const playSound = (type: "correct" | "wrong" | "tick") => {
+  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  if (type === "correct") {
+    osc.frequency.setValueAtTime(523, ctx.currentTime);
+    osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(784, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.5);
+  } else if (type === "wrong") {
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    osc.frequency.setValueAtTime(150, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
+  } else if (type === "tick") {
+    osc.frequency.setValueAtTime(800, ctx.currentTime);
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.05);
+  }
+};
 
   const subjects = [
     "Use of English", "Mathematics", "Physics",
@@ -61,11 +97,20 @@ export default function Battle() {
       setRoom(data);
 
       if (data.status === "playing" && screen === "waiting") {
-        setScreen("playing");
-        setCurrentIndex(0);
-        setTimeLeft(15);
-        setAnswerTime(15);
-      }
+  setShowIntro(true);
+  setIntroIndex(0);
+  const players = Object.values(data.players) as Player[];
+  players.forEach((_, i) => {
+    setTimeout(() => setIntroIndex(i), i * 2000);
+  });
+  setTimeout(() => {
+    setShowIntro(false);
+    setScreen("playing");
+    setCurrentIndex(0);
+    setTimeLeft(15);
+  }, players.length * 2000 + 500);
+}
+
       if (data.status === "finished" && screen === "playing") {
         setScreen("finished");
       }
@@ -95,7 +140,8 @@ export default function Battle() {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setTimeLeft((p) => {
-        if (p <= 1) {
+  if (p <= 5 && p > 1) playSound("tick");
+  if (p <= 1) {
           clearInterval(timerRef.current);
           handleNextQuestion();
           return 0;
@@ -189,6 +235,7 @@ export default function Battle() {
     const timeBonus = Math.floor(timeLeft / 3);
     const streakBonus = isCorrect ? Math.floor(currentStreak / 2) : 0;
     const pointsEarned = isCorrect ? 1 + timeBonus + streakBonus : 0;
+    playSound(isCorrect ? "correct" : "wrong");
     const newStreak = isCorrect ? currentStreak + 1 : 0;
 
     if (isCorrect && newStreak >= 3) {
@@ -361,6 +408,26 @@ export default function Battle() {
       )}
     </div>
   );
+   // INTRO SCREEN
+if (showIntro && room) {
+  const players = getPlayers();
+  const p = players[introIndex];
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 font-sans max-w-md mx-auto flex flex-col items-center justify-center px-6">
+      <p className="text-purple-300 text-sm mb-4 uppercase tracking-widest">Player {introIndex + 1} of {players.length}</p>
+      <div className="w-32 h-32 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-6xl mb-6 animate-bounce">
+        {p?.name[0].toUpperCase()}
+      </div>
+      <h1 className="text-white text-4xl font-bold text-center mb-2">{p?.name}</h1>
+      <p className="text-yellow-400 text-lg font-semibold">⚔️ Ready to Battle!</p>
+      <div className="flex gap-2 mt-8">
+        {players.map((_, i) => (
+          <div key={i} className={`w-3 h-3 rounded-full ${i === introIndex ? "bg-yellow-400" : "bg-white bg-opacity-30"}`} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
   // PLAYING
   if (screen === "playing" && room) {
