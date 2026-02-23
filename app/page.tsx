@@ -201,7 +201,15 @@ export default function Home() {
   className="block bg-purple-600 text-white text-center py-4 rounded-2xl font-bold text-lg mb-3 transition-colors"
 >
   ⚔️ Quiz Battle
-</a> 
+</a>
+
+<a
+  href="/watch"
+  className="block bg-red-500 text-white text-center py-4 rounded-2xl font-bold text-lg mb-3 transition-colors"
+>
+  🔴 Watch Live Battle
+</a>
+ 
       <a
   href="/global-leaderboard"
   className="block bg-yellow-400 text-white text-center py-4 rounded-2xl font-bold text-lg mb-3 transition-colors"
