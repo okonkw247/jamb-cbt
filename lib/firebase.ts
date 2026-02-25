@@ -1,6 +1,7 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getDatabase } from "firebase/database";
+import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA-xldRxhFqOsxv3xnjWsaOmcFG-nqG1n4",
@@ -15,4 +16,29 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 export const auth = getAuth(app);
 export const db = getDatabase(app);
+
+export const requestNotificationPermission = async () => {
+  try {
+    const supported = await isSupported();
+    if (!supported) return null;
+    const messaging = getMessaging(app);
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return null;
+    const token = await getToken(messaging, {
+      vapidKey: "BMhWLd4HjNQ33WMF-_2TVQKTxnS9RLDxOJ3Och4hDN5Oh1P8_KXUwD9TUuNxYgG51s6eOzggSDX6mDguezU7qzo"
+    });
+    return token;
+  } catch (err) {
+    console.log("Notification error:", err);
+    return null;
+  }
+};
+
+export const onForegroundMessage = async (callback: (payload: any) => void) => {
+  const supported = await isSupported();
+  if (!supported) return;
+  const messaging = getMessaging(app);
+  onMessage(messaging, callback);
+};
+
 export default app;

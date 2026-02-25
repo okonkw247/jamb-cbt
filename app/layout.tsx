@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import InstallPrompt from "@/components/InstallPrompt";
+import UpdateNotification from "@/components/UpdateNotification";
 
 export const metadata: Metadata = {
   title: "JAMB CBT Practice - Prepare, Practice, Pass",
@@ -54,6 +55,7 @@ export default function RootLayout({
       <body>
         {children}
        <InstallPrompt />
+       <UpdateNotification />
       </body>
     </html>
   );
