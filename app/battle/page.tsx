@@ -328,7 +328,10 @@ export default function Battle() {
       const path = myRound === "final"
         ? `battles/${roomCode}/tournament/final/scores/${playerId}`
         : `battles/${roomCode}/tournament/${myRound}/${myMatchIndex}/scores/${playerId}`;
-      await update(ref(db, path), currentScore + points);
+      await update(ref(db, `battles/${roomCode}/tournament/${myRound === "final" ? "final/scores" : `${myRound}/${myMatchIndex}/scores`}`), {
+  [playerId]: currentScore + points
+});
+
     } else {
       const player = room.players[playerId];
       const currentScore = player?.score || 0;
