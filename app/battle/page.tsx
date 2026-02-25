@@ -468,7 +468,8 @@ export default function Battle() {
       .sort((a, b) => b.score - a.score);
   };
 
-  const getPlayerName = (pid: string) => 
+    const getPlayerName = (pid: string) => room?.players[pid]?.name || "Unknown";
+ 
    
    // LOBBY
   if (screen === "lobby") return (
