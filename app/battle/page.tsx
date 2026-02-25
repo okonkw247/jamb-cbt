@@ -61,6 +61,35 @@ export default function Battle() {
   const [answerTime, setAnswerTime] = useState(15);
   const [showStreak, setShowStreak] = useState(false);
   const [streakCount, setStreakCount] = useState(0);
+  const [showCalc, setShowCalc] = useState(false);
+const [calcDisplay, setCalcDisplay] = useState("0");
+const [calcExpression, setCalcExpression] = useState("");
+const [calcEvaluated, setCalcEvaluated] = useState(false);
+const [showChat, setShowChat] = useState(false);
+const [chatMessage, setChatMessage] = useState("");
+const [messages, setMessages] = useState<{name: string; text: string; time: number}[]>([]);
+
+const calcNumber = (val: string) => {
+  if (calcEvaluated) { setCalcDisplay(val); setCalcExpression(val); setCalcEvaluated(false); return; }
+  setCalcDisplay(calcDisplay === "0" ? val : calcDisplay + val);
+  setCalcExpression(calcExpression + val);
+};
+const calcOperator = (op: string) => { setCalcEvaluated(false); setCalcExpression(calcExpression + op); setCalcDisplay(op); };
+const calcEquals = () => {
+  try {
+    const result = Function('"use strict"; return (' + calcExpression + ')')();
+    const rounded = Math.round(result * 1000000) / 1000000;
+    setCalcDisplay(String(rounded));
+    setCalcExpression(String(rounded));
+    setCalcEvaluated(true);
+  } catch { setCalcDisplay("Error"); setCalcExpression(""); }
+};
+const calcClear = () => { setCalcDisplay("0"); setCalcExpression(""); setCalcEvaluated(false); };
+const calcBack = () => {
+  if (calcDisplay.length === 1) { setCalcDisplay("0"); return; }
+  setCalcDisplay(calcDisplay.slice(0, -1));
+  setCalcExpression(calcExpression.slice(0, -1));
+};
   const [showIntro, setShowIntro] = useState(false);
   const [introIndex, setIntroIndex] = useState(0);
   const [myMatch, setMyMatch] = useState<Match | null>(null);
@@ -177,7 +206,10 @@ export default function Battle() {
         setFiftyUsed(false);
         setHiddenOptions([]);
       }
-
+      if (data.chat) {
+  const msgs = Object.values(data.chat) as {name: string; text: string; time: number}[];
+  setMessages(msgs.sort((a, b) => a.time - b.time).slice(-50));
+}
       if (data.reactions) {
         const now = Date.now();
         const fresh = Object.entries(data.reactions)
@@ -426,6 +458,39 @@ export default function Battle() {
     setFiftyUsed(true);
   };
 
+   const sendChat = async () => {
+  if (!chatMessage.trim() || !roomCode) return;
+  const id = generateCode();
+  await update(ref(db, `battles/${roomCode}/chat/${id}`), {
+    name: playerName,
+    text: chatMessage.trim(),
+    time: Date.now(),
+  });
+  setChatMessage("");
+};
+
+const exitRoom = async () => {
+  if (!confirm("Are you sure you want to exit?")) return;
+  if (room?.host === playerId) {
+    await update(ref(db, `battles/${roomCode}`), { status: "finished" });
+  } else {
+    const updatedPlayers = { ...room?.players };
+    delete updatedPlayers[playerId];
+    await update(ref(db, `battles/${roomCode}`), { players: updatedPlayers });
+  }
+  setScreen("lobby");
+  setRoomCode("");
+  setRoom(null);
+};
+
+const removePlayer = async (pid: string) => {
+  if (room?.host !== playerId) return;
+  if (!confirm(`Remove ${room?.players[pid]?.name}?`)) return;
+  const updatedPlayers = { ...room?.players };
+  delete updatedPlayers[pid];
+  await update(ref(db, `battles/${roomCode}`), { players: updatedPlayers });
+};
+
   const sendReaction = async (emoji: string) => {
     if (!roomCode || !playerName) return;
     const id = generateCode();
@@ -578,20 +643,30 @@ export default function Battle() {
           Players ({Object.keys(room?.players || {}).length}/{room?.maxPlayers || 4})
           {room?.mode === "tournament" && <span className="text-xs ml-2 text-yellow-200">Min 4 to start</span>}
         </p>
+
         {getPlayers().map((p) => (
-          <div key={p.id} className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white font-bold text-sm">
-              {p.name[0].toUpperCase()}
-            </div>
-            <p className="text-white font-medium">{p.name}</p>
-            {room?.host === p.id && <span className="text-yellow-300 text-xs">👑 Host</span>}
-          </div>
-        ))}
+  <div key={p.id} className="flex items-center gap-3 mb-2">
+    <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white font-bold text-sm">
+      {p.name[0].toUpperCase()}
+    </div>
+    <p className="text-white font-medium flex-1">{p.name}</p>
+    {room?.host === p.id && <span className="text-yellow-300 text-xs">👑 Host</span>}
+    {room?.host === playerId && p.id !== playerId && (
+      <button onClick={() => removePlayer(p.id)} className="text-red-300 text-xs bg-red-500 bg-opacity-30 px-2 py-1 rounded-lg">
+        Remove
+      </button>
+    )}
+  </div>
+ ))}
+
       </div>
       {room?.host === playerId ? (
         <button onClick={startGame} className="w-full bg-white text-purple-700 py-4 rounded-2xl font-bold text-lg mb-3">
           🎮 Start {room?.mode === "tournament" ? "Tournament" : "Game"}!
         </button>
+       <button onClick={exitRoom} className="w-full bg-white bg-opacity-20 text-white py-3 rounded-2xl font-bold mt-2">
+  🚪 Exit Room
+        </button> 
       ) : (
         <p className="text-white text-opacity-80 text-sm">Waiting for host to start...</p>
       )}
@@ -819,11 +894,108 @@ export default function Battle() {
                 Next →
               </button>
             </div>
-          )}
+             )}
         </div>
+
+          {/* Floating Calculator */}
+          <button
+            onClick={() => setShowCalc(!showCalc)}
+            className="fixed bottom-20 right-4 bg-green-500 text-white w-12 h-12 rounded-full text-xl shadow-lg z-50"
+          >
+            🧮
+          </button>
+
+          {/* Chat Button */}
+          <button
+            onClick={() => setShowChat(!showChat)}
+            className="fixed bottom-36 right-4 bg-blue-500 text-white w-12 h-12 rounded-full text-xl shadow-lg z-50"
+          >
+            💬
+          </button>
+
+          {/* Calculator Popup */}
+          {showCalc && (
+            <div className="fixed bottom-36 right-4 bg-white rounded-2xl shadow-2xl p-4 z-50 w-72">
+              <div className="flex justify-between items-center mb-3">
+                <p className="font-bold text-gray-700">Calculator</p>
+                <button onClick={() => setShowCalc(false)} className="text-gray-400 text-xl">✕</button>
+              </div>
+              <div className="bg-gray-900 rounded-xl p-3 mb-3">
+                <p className="text-gray-400 text-xs text-right">{calcExpression || " "}</p>
+                <p className="text-white text-2xl text-right font-light">{calcDisplay}</p>
+              </div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[
+                  ["AC", () => calcClear(), "bg-red-100 text-red-600"],
+                  ["⌫", () => calcBack(), "bg-orange-100 text-orange-600"],
+                  ["%", () => { const n = parseFloat(calcDisplay)/100; setCalcDisplay(String(n)); setCalcExpression(String(n)); }, "bg-gray-100 text-gray-600"],
+                  ["÷", () => calcOperator("/"), "bg-orange-400 text-white"],
+                  ["7", () => calcNumber("7"), "bg-gray-50 text-gray-800"],
+                  ["8", () => calcNumber("8"), "bg-gray-50 text-gray-800"],
+                  ["9", () => calcNumber("9"), "bg-gray-50 text-gray-800"],
+                  ["×", () => calcOperator("*"), "bg-orange-400 text-white"],
+                  ["4", () => calcNumber("4"), "bg-gray-50 text-gray-800"],
+                  ["5", () => calcNumber("5"), "bg-gray-50 text-gray-800"],
+                  ["6", () => calcNumber("6"), "bg-gray-50 text-gray-800"],
+                  ["−", () => calcOperator("-"), "bg-orange-400 text-white"],
+                  ["1", () => calcNumber("1"), "bg-gray-50 text-gray-800"],
+                  ["2", () => calcNumber("2"), "bg-gray-50 text-gray-800"],
+                  ["3", () => calcNumber("3"), "bg-gray-50 text-gray-800"],
+                  ["+", () => calcOperator("+"), "bg-orange-400 text-white"],
+                  ["0", () => calcNumber("0"), "bg-gray-50 text-gray-800 col-span-2"],
+                  [".", () => { if (!calcDisplay.includes(".")) { setCalcDisplay(calcDisplay+"."); setCalcExpression(calcExpression+"."); }}, "bg-gray-50 text-gray-800"],
+                  ["=", () => calcEquals(), "bg-green-500 text-white"],
+                ].map(([label, onClick, style]) => (
+                  <button
+                    key={String(label)}
+                    onClick={onClick as () => void}
+                    className={`${style} h-10 rounded-xl text-sm font-semibold active:scale-95 transition-all`}
+                  >
+                    {String(label)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Chat Popup */}
+          {showChat && (
+            <div className="fixed bottom-48 right-4 bg-white rounded-2xl shadow-2xl z-50 w-72 flex flex-col" style={{height: "300px"}}>
+              <div className="flex justify-between items-center p-3 border-b">
+                <p className="font-bold text-gray-700">💬 Team Chat</p>
+                <button onClick={() => setShowChat(false)} className="text-gray-400 text-xl">✕</button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+                {messages.length === 0 && (
+                  <p className="text-gray-400 text-xs text-center mt-4">No messages yet. Say something!</p>
+                )}
+                {messages.map((msg, i) => (
+                  <div key={i} className={`flex flex-col ${msg.name === playerName ? "items-end" : "items-start"}`}>
+                    <p className="text-gray-400 text-xs mb-0.5">{msg.name}</p>
+                    <div className={`px-3 py-2 rounded-xl text-sm max-w-48 ${msg.name === playerName ? "bg-purple-500 text-white" : "bg-gray-100 text-gray-800"}`}>
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="p-3 border-t flex gap-2">
+                <input
+                  type="text"
+                  value={chatMessage}
+                  onChange={(e) => setChatMessage(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && sendChat()}
+                  placeholder="Type a message..."
+                  className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none"
+                />
+                <button onClick={sendChat} className="bg-purple-500 text-white px-3 py-2 rounded-xl text-sm font-bold">
+                  Send
+                </button>
+              </div>
+            </div>
+          )}
       </div>
     );
-  }
+   }
 
   // FINISHED
   if (screen === "finished") {
