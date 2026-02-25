@@ -660,13 +660,10 @@ const removePlayer = async (pid: string) => {
  ))}
 
       </div>
-      {room?.host === playerId ? (
+       {room?.host === playerId ? (
         <button onClick={startGame} className="w-full bg-white text-purple-700 py-4 rounded-2xl font-bold text-lg mb-3">
           🎮 Start {room?.mode === "tournament" ? "Tournament" : "Game"}!
         </button>
-       <button onClick={exitRoom} className="w-full bg-white bg-opacity-20 text-white py-3 rounded-2xl font-bold mt-2">
-  🚪 Exit Room
-        </button> 
       ) : (
         <p className="text-white text-opacity-80 text-sm">Waiting for host to start...</p>
       )}
