@@ -45,21 +45,23 @@ export default function UpdateNotification() {
     return () => unsub();
   }, []);
 
-  const enableNotifications = async () => {
-    const token = await requestNotificationPermission();
-    if (token) {
-      localStorage.setItem("fcmToken", token);
-      localStorage.setItem("notifPermissionAsked", "true");
-      // Save token to Firebase via API
-      try {
-        await fetch("/api/save-token", {
+const enableNotifications = async () => {
+    try {
+      const token = await requestNotificationPermission();
+      alert("Token: " + (token ? token.slice(0, 30) + "..." : "NULL - permission denied or not supported"));
+      if (token) {
+        localStorage.setItem("fcmToken", token);
+        localStorage.setItem("notifPermissionAsked", "true");
+        const res = await fetch("/api/save-token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
         });
-      } catch (err) {
-        console.log("Token save error:", err);
+        const data = await res.json();
+        alert("Save result: " + JSON.stringify(data));
       }
+    } catch (err: any) {
+      alert("Error: " + err.message);
     }
     setShowPermission(false);
     localStorage.setItem("notifPermissionAsked", "true");
