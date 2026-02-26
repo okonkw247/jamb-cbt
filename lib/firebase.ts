@@ -20,16 +20,24 @@ export const db = getDatabase(app);
 export const requestNotificationPermission = async () => {
   try {
     const supported = await isSupported();
-    if (!supported) return null;
-    const messaging = getMessaging(app);
+    if (!supported) {
+      alert("FCM not supported on this browser");
+      return null;
+    }
     const permission = await Notification.requestPermission();
-    if (permission !== "granted") return null;
+    if (permission !== "granted") {
+      alert("Permission: " + permission + " - Please allow notifications in Chrome settings");
+      return null;
+    }
+    const messaging = getMessaging(app);
+    const swReg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
     const token = await getToken(messaging, {
-      vapidKey: "BMhWLd4HjNQ33WMF-_2TVQKTxnS9RLDxOJ3Och4hDN5Oh1P8_KXUwD9TUuNxYgG51s6eOzggSDX6mDguezU7qzo"
+      vapidKey: "BMhWLd4HjNQ33WMF-_2TVQKTxnS9RLDxOJ3Och4hDN5Oh1P8_KXUwD9TUuNxYgG51s6eOzggSDX6mDguezU7qzo",
+      serviceWorkerRegistration: swReg,
     });
     return token;
-  } catch (err) {
-    console.log("Notification error:", err);
+  } catch (err: any) {
+    alert("FCM Error: " + err.message);
     return null;
   }
 };
