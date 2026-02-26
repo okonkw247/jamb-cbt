@@ -50,6 +50,16 @@ export default function UpdateNotification() {
     if (token) {
       localStorage.setItem("fcmToken", token);
       localStorage.setItem("notifPermissionAsked", "true");
+      // Save token to Firebase via API
+      try {
+        await fetch("/api/save-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
+      } catch (err) {
+        console.log("Token save error:", err);
+      }
     }
     setShowPermission(false);
     localStorage.setItem("notifPermissionAsked", "true");
