@@ -42,13 +42,16 @@ export const metadata: Metadata = {
 export const viewport = {
   themeColor: "#1a5c2a",
 };
-
+ 
 const registerSW = `
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
       navigator.serviceWorker.register('/sw.js')
         .then(function(reg) { console.log('SW registered'); })
         .catch(function(err) { console.log('SW error:', err); });
+      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then(function(reg) { console.log('FCM SW registered'); })
+        .catch(function(err) { console.log('FCM SW error:', err); });
     });
   }
 `;
