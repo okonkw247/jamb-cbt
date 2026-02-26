@@ -43,6 +43,15 @@ export const viewport = {
   themeColor: "#1a5c2a",
 };
 
+const registerSW = `
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js')
+        .then(function(reg) { console.log('SW registered'); })
+        .catch(function(err) { console.log('SW error:', err); });
+    });
+  }
+`;
 
 export default function RootLayout({
   children,
@@ -56,6 +65,7 @@ export default function RootLayout({
         {children}
        <InstallPrompt />
        <UpdateNotification />
+       <script dangerouslySetInnerHTML={{ __html: registerSW }} />
       </body>
     </html>
   );

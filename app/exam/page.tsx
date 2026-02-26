@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { saveQuestions, getQuestions } from "@/lib/questionCache";
 
 const ACCESS_TOKEN = "QB-de92a6179a6e85d1d140";
 
@@ -72,25 +73,43 @@ const calcBack = () => {
 
   const fetchQuestions = useCallback(async (subjectName: string) => {
     setLoading(true);
-setError(false);
-setCurrent(0);
-setSelected({});
-setFlagged([]);
-try {
-  // Check cache first
-  if (cache[subjectName]) {
-    setQuestions(cache[subjectName]);
-    setLoading(false);
-    return;
-  }
-  const key = subjectMap[subjectName] || "english";
-  const res = await fetch(`/api/questions?subject=${encodeURIComponent(subjectName)}`);
-      const data = await res.json();
-      if (!data.data || data.data.length === 0) {
-        setError(true);
+    setError(false);
+    setCurrent(0);
+    setSelected({});
+    setFlagged([]);
+    try {
+      // Check memory cache first
+      if (cache[subjectName]) {
+        setQuestions(cache[subjectName]);
+        setLoading(false);
+        return;
+      }
+
+      // Try API first
+      try {
+        const res = await fetch(`/api/questions?subject=${encodeURIComponent(subjectName)}`);
+        const data = await res.json();
+        if (data.data && data.data.length > 0) {
+          setQuestions(data.data);
+          cache[subjectName] = data.data;
+          // Save to IndexedDB for offline use
+          await saveQuestions(subjectName, data.data);
+          setLoading(false);
+          return;
+        }
+      } catch {
+        // API failed - fall through to cached questions
+      }
+
+      // API failed or empty - try IndexedDB cache
+      const cached = await getQuestions(subjectName);
+      if (cached && cached.length > 0) {
+        setQuestions(cached);
+        cache[subjectName] = cached;
+        // Show user they are using cached questions
+        console.log("Using cached questions for", subjectName);
       } else {
-        setQuestions(data.data);
-        cache[subjectName] = data.data;
+        setError(true);
       }
     } catch {
       setError(true);
@@ -98,6 +117,7 @@ try {
       setLoading(false);
     }
   }, []);
+
 
   useEffect(() => {
     fetchQuestions(subject);

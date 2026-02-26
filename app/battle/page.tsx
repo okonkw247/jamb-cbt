@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { db } from "@/lib/firebase";
 import { ref, set, onValue, push, update, get } from "firebase/database";
 import { useRouter } from "next/navigation";
+import { saveQuestions, getQuestions } from "@/lib/questionCache";
 
 interface Player {
   name: string;
@@ -246,9 +247,27 @@ const calcBack = () => {
     try {
       const code = generateCode();
       const pid = generateCode();
-      const res = await fetch(`/api/questions?subject=${encodeURIComponent(subject)}`);
-      const data = await res.json();
-      const questions = (data.data || []).slice(0, 10);
+      let questions: any[] = [];
+      try {
+        const res = await fetch(`/api/questions?subject=${encodeURIComponent(subject)}`);
+        const data = await res.json();
+        if (data.data && data.data.length > 0) {
+          questions = data.data.slice(0, 10);
+          await saveQuestions(subject, data.data);
+        }
+      } catch {
+        // API failed - use cached questions
+      }
+      if (questions.length === 0) {
+        const cached = await getQuestions(subject);
+        if (cached && cached.length > 0) {
+          questions = cached.slice(0, 10);
+        } else {
+          alert("No questions available. Please check your connection!");
+          setLoading(false);
+          return;
+        }
+      }
 
       await set(ref(db, `battles/${code}`), {
         host: pid,
@@ -505,9 +524,27 @@ const removePlayer = async (pid: string) => {
       alert("Only the host can start a rematch!");
       return;
     }
-    const res = await fetch(`/api/questions?subject=${encodeURIComponent(room.subject)}`);
-    const data = await res.json();
-    const questions = (data.data || []).slice(0, 10);
+
+    let questions: any[] = [];
+      try {
+        const res = await fetch(`/api/questions?subject=${encodeURIComponent(room.subject)}`);
+        const data = await res.json();
+        if (data.data && data.data.length > 0) {
+          questions = data.data.slice(0, 10);
+          await saveQuestions(room.subject, data.data);
+        }
+      } catch {
+        // API failed - use cached
+      }
+      if (questions.length === 0) {
+        const cached = await getQuestions(room.subject);
+        if (cached && cached.length > 0) {
+          questions = cached.slice(0, 10);
+        } else {
+          alert("No questions available!");
+          return;
+        }
+      }
     const resetPlayers: any = {};
     Object.keys(room.players).forEach((pid) => {
       resetPlayers[pid] = { ...room.players[pid], score: 0, answered: 0, streak: 0 };
