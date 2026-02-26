@@ -105,8 +105,8 @@ export default function UpdateNotification() {
 
   // UPDATE AVAILABLE
   if (showUpdate && !updating) return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end justify-center z-50 px-4 pb-6">
-      <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
+         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end justify-center z-50 px-4 pb-4">
+      <div className="bg-white rounded-3xl p-4 w-full max-w-sm shadow-2xl max-h-[80vh] overflow-y-auto">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center text-3xl">
             🎉
@@ -117,24 +117,19 @@ export default function UpdateNotification() {
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-2xl p-4 mb-4">
-          <p className="text-gray-700 font-semibold text-sm mb-2">What's new 🚀</p>
+<div className="bg-gray-50 rounded-2xl p-3 mb-3 max-h-40 overflow-y-auto">
+          <p className="text-gray-700 font-semibold text-xs mb-2">What's new 🚀</p>
           {changelog.map((item, i) => (
-            <div key={i} className="flex items-start gap-2 mb-1.5">
+            <div key={i} className="flex items-start gap-2 mb-1">
               <span className="text-green-500 text-xs mt-0.5">✓</span>
-              <p className="text-gray-600 text-sm">{item}</p>
+              <p className="text-gray-600 text-xs">{item}</p>
             </div>
           ))}
         </div>
 
-        <div className="flex items-center gap-2 bg-blue-50 rounded-xl p-3 mb-4">
-          <span className="text-blue-500">📦</span>
-          <p className="text-blue-600 text-sm">Download size: <span className="font-bold">{dataSize}</span></p>
-        </div>
-
         <button
           onClick={handleUpdate}
-          className="w-full bg-green-500 text-white py-4 rounded-2xl font-bold text-lg mb-2"
+          className="w-full bg-green-500 text-white py-3 rounded-2xl font-bold text-base mb-2"
         >
           🔄 Update Now
         </button>
@@ -143,10 +138,11 @@ export default function UpdateNotification() {
             localStorage.setItem("lastUpdateVersion", newVersion);
             setShowUpdate(false);
           }}
-          className="w-full bg-gray-100 text-gray-500 py-3 rounded-2xl font-medium text-sm"
+          className="w-full bg-gray-100 text-gray-500 py-2 rounded-2xl font-medium text-sm"
         >
           Later
         </button>
+
       </div>
     </div>
   );
