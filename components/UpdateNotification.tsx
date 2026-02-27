@@ -14,12 +14,21 @@ export default function UpdateNotification() {
   const [changelog, setChangelog] = useState<string[]>([]);
   const [newVersion, setNewVersion] = useState("");
 
-  useEffect(() => {
-    // Ask for notification permission on first visit
-    const askedPermission = localStorage.getItem("notifPermissionAsked");
-    if (!askedPermission) {
-      setTimeout(() => setShowPermission(true), 3000);
-    }
+useEffect(() => {
+    // Check Firebase for force reset flag
+    const resetRef = ref(db, "forceNotifReset");
+    onValue(resetRef, (snapshot) => {
+      const resetKey = snapshot.val();
+      const lastReset = localStorage.getItem("lastNotifReset");
+      const askedPermission = localStorage.getItem("notifPermissionAsked");
+
+      // Show popup if never asked OR if force reset is newer
+      if (!askedPermission || (resetKey && resetKey !== lastReset)) {
+        localStorage.removeItem("notifPermissionAsked");
+        localStorage.setItem("lastNotifReset", resetKey);
+        setTimeout(() => setShowPermission(true), 3000);
+      }
+    });
 
     // Listen for updates from Firebase
     const updateRef = ref(db, "appUpdate");
