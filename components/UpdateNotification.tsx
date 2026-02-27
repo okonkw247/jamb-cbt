@@ -48,20 +48,17 @@ export default function UpdateNotification() {
 const enableNotifications = async () => {
     try {
       const token = await requestNotificationPermission();
-      alert("Token: " + (token ? token.slice(0, 30) + "..." : "NULL - permission denied or not supported"));
       if (token) {
         localStorage.setItem("fcmToken", token);
         localStorage.setItem("notifPermissionAsked", "true");
-        const res = await fetch("/api/save-token", {
+        await fetch("/api/save-token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
         });
-        const data = await res.json();
-        alert("Save result: " + JSON.stringify(data));
       }
-    } catch (err: any) {
-      alert("Error: " + err.message);
+    } catch (err) {
+      console.log("Notification error:", err);
     }
     setShowPermission(false);
     localStorage.setItem("notifPermissionAsked", "true");
