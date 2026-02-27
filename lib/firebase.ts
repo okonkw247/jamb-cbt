@@ -21,16 +21,17 @@ export const requestNotificationPermission = async () => {
   try {
     const supported = await isSupported();
     if (!supported) {
-      alert("FCM not supported on this browser");
+      alert("FCM not supported");
       return null;
     }
     const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      alert("Permission: " + permission + " - Please allow notifications in Chrome settings");
-      return null;
-    }
+    if (permission !== "granted") return null;
+
+    // Register FCM service worker manually
+    const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    await navigator.serviceWorker.ready;
+
     const messaging = getMessaging(app);
-    const swReg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
     const token = await getToken(messaging, {
       vapidKey: "BMhWLd4HjNQ33WMF-_2TVQKTxnS9RLDxOJ3Och4hDN5Oh1P8_KXUwD9TUuNxYgG51s6eOzggSDX6mDguezU7qzo",
       serviceWorkerRegistration: swReg,
