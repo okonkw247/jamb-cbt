@@ -33,7 +33,7 @@ export const requestNotificationPermission = async () => {
 
     const messaging = getMessaging(app);
     const token = await getToken(messaging, {
-      vapidKey: "BMhWLd4HjNQ33WMF-_2TVQKTxnS9RLDxOJ3Och4hDN5Oh1P8_KXUwD9TUuNxYgG51s6eOzggSDX6mDguezU7qzo",
+      vapidKey: "BLJQV-vgQ0waa_opMBNycIxeUEL2sTI-gim7Ip7rqQ7q_-Q00yIUoN9wA4hPDVgjdwz4Y5wSYHKxIl8g-Pxnw0E",
       serviceWorkerRegistration: swReg,
     });
     return token;
