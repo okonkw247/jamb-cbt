@@ -1,5 +1,5 @@
-const CACHE_NAME = "jamb-cbt-v3";
-const QUESTION_CACHE = "jamb-questions-v3";
+const CACHE_NAME = "jamb-cbt-" + new Date().getTime();
+const QUESTION_CACHE = "jamb-questions-" + new Date().getTime();
 
 const STATIC_ASSETS = [
   "/",
