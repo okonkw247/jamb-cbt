@@ -1,5 +1,5 @@
-const CACHE_NAME = "jamb-cbt-v1";
-const QUESTION_CACHE = "jamb-questions-v1";
+const CACHE_NAME = "jamb-cbt-v3";
+const QUESTION_CACHE = "jamb-questions-v3";
 
 const STATIC_ASSETS = [
   "/",
