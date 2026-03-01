@@ -52,14 +52,14 @@ export default function Battle() {
   const [playerId, setPlayerId] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(15);
+  const [timeLeft, setTimeLeft] = useState(35);
   const [subject, setSubject] = useState("Use of English");
   const [mode, setMode] = useState<"casual" | "tournament">("casual");
   const [loading, setLoading] = useState(false);
   const [visibleReactions, setVisibleReactions] = useState<{ emoji: string; name: string; id: string }[]>([]);
   const [fiftyUsed, setFiftyUsed] = useState(false);
   const [hiddenOptions, setHiddenOptions] = useState<string[]>([]);
-  const [answerTime, setAnswerTime] = useState(15);
+  const [answerTime, setAnswerTime] = useState(35);
   const [showStreak, setShowStreak] = useState(false);
   const [streakCount, setStreakCount] = useState(0);
   const [showCalc, setShowCalc] = useState(false);
@@ -67,6 +67,9 @@ const [calcDisplay, setCalcDisplay] = useState("0");
 const [calcExpression, setCalcExpression] = useState("");
 const [calcEvaluated, setCalcEvaluated] = useState(false);
 const [showChat, setShowChat] = useState(false);
+const [unreadCount, setUnreadCount] = useState(0);
+const [lastSeenCount, setLastSeenCount] = useState(0);
+
 const [chatMessage, setChatMessage] = useState("");
 const [messages, setMessages] = useState<{name: string; text: string; time: number}[]>([]);
 
@@ -156,7 +159,7 @@ const calcBack = () => {
             setShowIntro(false);
             setScreen("playing");
             setCurrentIndex(0);
-            setTimeLeft(15);
+            setTimeLeft(35);
           }, players.length * 2000 + 500);
         }
       }
@@ -184,7 +187,7 @@ const calcBack = () => {
                 setShowIntro(false);
                 setScreen("playing");
                 setCurrentIndex(0);
-                setTimeLeft(15);
+                setTimeLeft(35);
                 setSelected(null);
               }, players.length * 2000 + 500);
             }
@@ -200,15 +203,20 @@ const calcBack = () => {
       if (data.status === "finished" && screen === "playing" && data.mode === "casual") {
         setScreen("finished");
       }
-      if (data.status === "waiting" && screen === "finished") {
+
+       if (data.status === "waiting" && screen === "finished") {
         setScreen("waiting");
         setCurrentIndex(0);
         setSelected(null);
+        setTimeLeft(35);
         setFiftyUsed(false);
-        setHiddenOptions([]);
       }
+       
       if (data.chat) {
   const msgs = Object.values(data.chat) as {name: string; text: string; time: number}[];
+  if (!showChat) {
+    setUnreadCount(msgs.length - lastSeenCount);
+  }
   setMessages(msgs.sort((a, b) => a.time - b.time).slice(-50));
 }
       if (data.reactions) {
@@ -345,7 +353,14 @@ const calcBack = () => {
           });
         }
       }
-      await update(ref(db, `battles/${roomCode}`), {
+            await update(ref(db, `battles/${roomCode}`), {
+      status: "waiting", questions, reactions: {}, players: resetPlayers,
+      tournament: room.mode === "tournament" ? {
+        bracket: [], semifinals: [], final: null, champion: null, round: 1
+      } : null,
+    });
+
+  };await update(ref(db, `battles/${roomCode}`), {
         status: "playing",
         "tournament/bracket": bracket,
       });
@@ -356,7 +371,8 @@ const calcBack = () => {
 
   const startMyMatch = async () => {
     if (!myMatch || myMatchIndex === -1) return;
-    if (myMatch.players[0] !== playerId) return alert("Wait for your opponent to start!");
+    if (!myMatch.players.includes(playerId)) return alert("You are not in this match!");
+
     const path = myRound === "final"
       ? `battles/${roomCode}/tournament/final`
       : `battles/${roomCode}/tournament/${myRound}/${myMatchIndex}`;
@@ -367,7 +383,6 @@ const calcBack = () => {
     if (selected || !room) return;
     setSelected(opt);
     clearInterval(timerRef.current);
-
     const q = room.questions[currentIndex];
     const isCorrect = opt === q.answer;
     playSound(isCorrect ? "correct" : "wrong");
@@ -463,8 +478,8 @@ const calcBack = () => {
 
     setCurrentIndex(nextIndex);
     setSelected(null);
-    setTimeLeft(15);
-    setAnswerTime(15);
+    setTimeLeft(35);
+    setAnswerTime(35);
     setHiddenOptions([]);
   };
 
@@ -932,21 +947,35 @@ const removePlayer = async (pid: string) => {
         </div>
 
           {/* Floating Calculator */}
+
           <button
             onClick={() => setShowCalc(!showCalc)}
-            className="fixed bottom-20 right-4 bg-green-500 text-white w-12 h-12 rounded-full text-xl shadow-lg z-50"
+            className="fixed bottom-20 right-4 bg-green-500 text-white rounded-2xl shadow-lg z-50 flex flex-col items-center justify-center px-3 py-2 gap-0.5"
           >
-            🧮
+            <span className="text-xl">🧮</span>
+            <span className="text-white text-xs font-bold">Calc</span>
           </button>
 
           {/* Chat Button */}
-          <button
-            onClick={() => setShowChat(!showChat)}
-            className="fixed bottom-36 right-4 bg-blue-500 text-white w-12 h-12 rounded-full text-xl shadow-lg z-50"
-          >
-            💬
-          </button>
-
+              <div className="fixed bottom-36 right-4 z-50">
+            <button
+              onClick={() => {
+                setShowChat(!showChat);
+                setUnreadCount(0);
+                setLastSeenCount(chatMessages.length);
+              }}
+              className="relative bg-blue-500 text-white rounded-2xl shadow-lg flex flex-col items-center justify-center px-3 py-2 gap-0.5"
+            >
+              <span className="text-xl">💬</span>
+              <span className="text-white text-xs font-bold">Chat</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold animate-bounce shadow-lg">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+          </div>
+            
           {/* Calculator Popup */}
           {showCalc && (
             <div className="fixed bottom-36 right-4 bg-white rounded-2xl shadow-2xl p-4 z-50 w-72">
