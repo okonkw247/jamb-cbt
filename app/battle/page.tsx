@@ -351,19 +351,21 @@ const calcBack = () => {
             scores: { [shuffled[i]]: 0, [shuffled[i + 1]]: 0 },
             status: "waiting",
           });
-        }
+         }
       }
-            await update(ref(db, `battles/${roomCode}`), {
-      status: "waiting", questions, reactions: {}, players: resetPlayers,
-      tournament: room.mode === "tournament" ? {
-        bracket: [], semifinals: [], final: null, champion: null, round: 1
-      } : null,
-    });
-  });
+      await update(ref(db, `battles/${roomCode}`), {
+        status: "playing",
+        "tournament/bracket": bracket,
+      });
+    } else {
+      await update(ref(db, `battles/${roomCode}`), { status: "playing" });
+    }
   };
 
   const startGame = async () => {
-    if (!room) return;
+
+       
+   if (!room) return;
     const playerIds = Object.keys(room.players);
     const minPlayers = room.mode === "tournament" ? 4 : 2;
     if (playerIds.length < minPlayers) {
