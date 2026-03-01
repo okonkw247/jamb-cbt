@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import OnboardingWizard from "@/components/OnboardingWizard";
 
 const subjects = [
   { name: "Use of English", icon: "📖", required: true, questions: 60, time: "2 hrs" },
@@ -23,18 +24,29 @@ export default function Home() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [name, setName] = useState("");
   const [selected, setSelected] = useState<string[]>(["Use of English"]);
 
-  useEffect(() => {
+useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       if (!u) { router.push("/login"); return; }
       setUser(u);
       setName(u.displayName || "");
       setAuthLoading(false);
+      // Show onboarding for new users
+      const done = localStorage.getItem("onboardingComplete");
+      if (!done) setShowOnboarding(true);
     });
     return () => unsub();
   }, []);
+   
+  if (showOnboarding && user) return (
+    <OnboardingWizard
+      user={user}
+      onComplete={() => setShowOnboarding(false)}
+    />
+  );
 
   if (authLoading) return (
     <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-green-700 flex flex-col items-center justify-center px-6 font-sans">
