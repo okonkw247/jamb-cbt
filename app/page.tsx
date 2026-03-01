@@ -216,6 +216,12 @@ export default function Home() {
 >
   🌍 Global Leaderboard
 </a>
+   <a
+          href="/settings"
+          className="block bg-gray-800 text-white text-center py-4 rounded-2xl font-bold text-lg mb-3 transition-colors"
+        >
+          ⚙️ My Account & Settings
+        </a>
       </div>
     </div>
   );
