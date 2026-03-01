@@ -228,6 +228,13 @@ useEffect(() => {
 >
   🌍 Global Leaderboard
 </a>
+    <a
+          href="/study-wizard"
+          className="block bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center py-4 rounded-2xl font-bold text-lg mb-3 transition-colors"
+        >
+          🧙 Study Wizard
+        </a>
+
    <a
           href="/settings"
           className="block bg-gray-800 text-white text-center py-4 rounded-2xl font-bold text-lg mb-3 transition-colors"
