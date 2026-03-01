@@ -13,11 +13,16 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
- messaging.onBackgroundMessage((payload) => {
+messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title || "JAMB CBT Update!";
   const body = payload.notification?.body || "New features available!";
-  self.registration.showNotification(title, {
+  
+  // Set badge on app icon
+  if (navigator.setAppBadge) {
+    navigator.setAppBadge(1);
+  }
 
+  self.registration.showNotification(title, {
     body,
     icon: '/logo.png',
     badge: '/logo.png',

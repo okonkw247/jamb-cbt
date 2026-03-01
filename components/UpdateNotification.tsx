@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { db, requestNotificationPermission } from "@/lib/firebase";
+import { db, requestNotificationPermission, clearAppBadge } from "@/lib/firebase";
 import { ref, onValue } from "firebase/database";
 
 const CURRENT_VERSION = "1.5.0";
@@ -79,6 +79,7 @@ export default function UpdateNotification() {
   };
 
   const handleUpdate = async () => {
+
     setUpdating(true);
     setProgress(0);
     setStepIndex(0);
@@ -198,7 +199,11 @@ export default function UpdateNotification() {
           ⬇️ Update Now
         </button>
         <button
-          onClick={() => { localStorage.setItem("lastUpdateVersion", newVersion); setShowUpdate(false); }}
+          onClick={() => {
+            clearAppBadge();
+            localStorage.setItem("lastUpdateVersion", newVersion);
+            setShowUpdate(false);
+          }}
           className="w-full bg-gray-100 text-gray-500 py-2.5 rounded-2xl font-medium text-sm"
         >
           Later

@@ -47,7 +47,19 @@ export const onForegroundMessage = async (callback: (payload: any) => void) => {
   const supported = await isSupported();
   if (!supported) return;
   const messaging = getMessaging(app);
-  onMessage(messaging, callback);
+  onMessage(messaging, (payload) => {
+    // Set red badge on app icon
+    if (navigator.setAppBadge) {
+      navigator.setAppBadge(1);
+    }
+    callback(payload);
+  });
+};
+
+export const clearAppBadge = () => {
+  if (navigator.setAppBadge) {
+    navigator.clearAppBadge();
+  }
 };
 
 export default app;
