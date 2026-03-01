@@ -359,8 +359,29 @@ const calcBack = () => {
         bracket: [], semifinals: [], final: null, champion: null, round: 1
       } : null,
     });
+  });
+  };
 
-  };await update(ref(db, `battles/${roomCode}`), {
+  const startGame = async () => {
+    if (!room) return;
+    const playerIds = Object.keys(room.players);
+    const minPlayers = room.mode === "tournament" ? 4 : 2;
+    if (playerIds.length < minPlayers) {
+      return alert(`Need at least ${minPlayers} players to start!`);
+    }
+    if (room.mode === "tournament") {
+      const shuffled = playerIds.sort(() => Math.random() - 0.5);
+      const bracket: Match[] = [];
+      for (let i = 0; i < shuffled.length; i += 2) {
+        if (shuffled[i + 1]) {
+          bracket.push({
+            players: [shuffled[i], shuffled[i + 1]],
+            scores: { [shuffled[i]]: 0, [shuffled[i + 1]]: 0 },
+            status: "waiting",
+          });
+        }
+      }
+      await update(ref(db, `battles/${roomCode}`), {
         status: "playing",
         "tournament/bracket": bracket,
       });
@@ -368,7 +389,7 @@ const calcBack = () => {
       await update(ref(db, `battles/${roomCode}`), { status: "playing" });
     }
   };
-
+  
   const startMyMatch = async () => {
     if (!myMatch || myMatchIndex === -1) return;
     if (!myMatch.players.includes(playerId)) return alert("You are not in this match!");
