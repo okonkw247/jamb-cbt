@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jamb-cbt-chi.vercel.app/sitemap.xml
