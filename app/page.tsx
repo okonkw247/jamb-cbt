@@ -416,6 +416,8 @@ export default function Home() {
               { label: "My History", desc: "View all your past exams", icon: "📊", href: "/history", color: "from-gray-700 to-gray-800" },
               { label: "Calculator", desc: "Scientific calculator", icon: "🧮", href: "/calculator", color: "from-gray-700 to-gray-800" },
               { label: "Account & Settings", desc: "Profile, stats and preferences", icon: "⚙️", href: "/settings", color: "from-gray-700 to-gray-800" },
+              { label: "About", desc: "About JAMB CBT Practice", icon: "ℹ️", href: "/about", color: "from-gray-700 to-gray-800" },
+              { label: "Privacy Policy", desc: "How we handle your data", icon: "🔒", href: "/privacy", color: "from-gray-700 to-gray-800" },
             ].map((item) => (
               <a
                 key={item.label}
