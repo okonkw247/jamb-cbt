@@ -3,7 +3,7 @@ import "./globals.css";
 import InstallPrompt from "@/components/InstallPrompt";
 import UpdateNotification from "@/components/UpdateNotification";
 import Script from "next/script";
-
+import { SpeedInsights } from "@vercel/speed-insights/next";
 export const metadata: Metadata = {
   title: "JAMB CBT Practice - Prepare, Practice, Pass",
   description: "Free JAMB CBT practice app with real past questions for all subjects. Practice anytime, anywhere!",
@@ -71,6 +71,7 @@ export default function RootLayout({
         crossOrigin="anonymous"
         strategy="afterInteractive"
       />
+      <SpeedInsights />
       <body>
         {children}
        <InstallPrompt />
