@@ -206,6 +206,7 @@ export default function Home() {
                 { label: "Calculator", icon: "🧮", href: "/calculator", color: "bg-gray-800" },
                 { label: "Study Wizard", icon: "🧙", href: "/study-wizard", color: "bg-indigo-900" },
                 { label: "Watch Live", icon: "🔴", href: "/watch", color: "bg-red-900" },
+                { label: "Study Mode", icon: "📖", href: "/study-mode", color: "bg-blue-900" },
               ].map((f) => (
                 <a
                   key={f.label}
