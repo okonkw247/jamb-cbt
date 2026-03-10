@@ -17,17 +17,19 @@ const subjectMap: { [key: string]: string } = {
 
 export async function GET(req: NextRequest) {
   const subject = req.nextUrl.searchParams.get("subject") || "Use of English";
+  const topic = req.nextUrl.searchParams.get("topic") || "";
   const subjectKey = subjectMap[subject] || "english";
 
-  const res = await fetch(
-    `https://questions.aloc.com.ng/api/v2/q/40?subject=${subjectKey}&type=utme`,
-    {
-      headers: {
-        Accept: "application/json",
-        AccessToken: "QB-de92a6179a6e85d1d140",
-      },
-    }
-  );
+  const url = topic
+    ? `https://questions.aloc.com.ng/api/v2/q/40?subject=${subjectKey}&topic=${encodeURIComponent(topic)}&type=utme`
+    : `https://questions.aloc.com.ng/api/v2/q/40?subject=${subjectKey}&type=utme`;
+
+  const res = await fetch(url, {
+    headers: {
+      Accept: "application/json",
+      AccessToken: "QB-de92a6179a6e85d1d140",
+    },
+  });
 
   const data = await res.json();
   return NextResponse.json(data);
