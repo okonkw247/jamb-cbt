@@ -12,10 +12,8 @@ export async function POST(req: NextRequest) {
   }
 
   const prompt = `You are a JAMB expert teacher in Nigeria. Generate study notes for a Nigerian SS3 student preparing for JAMB.
-
 Subject: ${subject}
 Topic: ${topic}
-
 Respond with ONLY a JSON object, no markdown, no explanation:
 {
   "title": "Topic title",
@@ -28,7 +26,7 @@ Respond with ONLY a JSON object, no markdown, no explanation:
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -40,7 +38,6 @@ Respond with ONLY a JSON object, no markdown, no explanation:
     );
 
     const data = await response.json();
-
     if (data.error) {
       return NextResponse.json({ error: data.error.message }, { status: 500 });
     }
