@@ -11,8 +11,7 @@ interface Question {
   answer: string;
 }
 
-interface ExamResult {
-  name: string;
+interface SubjectResult {
   subject: string;
   score: number;
   total: number;
@@ -22,143 +21,197 @@ interface ExamResult {
 
 export default function Results() {
   const router = useRouter();
-  const [result, setResult] = useState<ExamResult | null>(null);
+  const [results, setResults] = useState<SubjectResult[]>([]);
+  const [name, setName] = useState("");
+  const [activeTab, setActiveTab] = useState(0);
+  const [showBreakdown, setShowBreakdown] = useState(false);
 
   useEffect(() => {
     const data = sessionStorage.getItem("examResult");
     if (!data) { router.push("/"); return; }
     const parsed = JSON.parse(data);
-    setResult(parsed);
 
-    const percent = Math.round((parsed.score / parsed.total) * 100);
+    let finalResults: SubjectResult[] = [];
+    let candidateName = parsed.name || "Candidate";
 
-    // Save to global leaderboard
-    push(ref(db, "leaderboard"), {
-      name: parsed.name || "Anonymous",
-      subject: parsed.subject,
-      score: parsed.score,
-      total: parsed.total,
-      percent,
-      date: new Date().toLocaleDateString(),
-    });
+    // Handle new multi-subject format
+    if (parsed.multiSubject && parsed.results) {
+      finalResults = parsed.results;
+      candidateName = parsed.name || "Candidate";
+    } else {
+      // Handle old single-subject format
+      finalResults = [{
+        subject: parsed.subject,
+        score: parsed.score,
+        total: parsed.total,
+        questions: parsed.questions || [],
+        selected: parsed.selected || {},
+      }];
+    }
 
-    // Save to local history
+    setName(candidateName);
+    setResults(finalResults);
+
+    // Save each subject to leaderboard and history
     const history = JSON.parse(localStorage.getItem("examHistory") || "[]");
-    history.unshift({
-      name: parsed.name,
-      subject: parsed.subject,
-      score: parsed.score,
-      total: parsed.total,
-      percent,
-      date: new Date().toLocaleDateString(),
+    finalResults.forEach((r) => {
+      const percent = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
+      push(ref(db, "leaderboard"), {
+        name: candidateName,
+        subject: r.subject,
+        score: r.score,
+        total: r.total,
+        percent,
+        date: new Date().toLocaleDateString(),
+      });
+      history.unshift({
+        name: candidateName,
+        subject: r.subject,
+        score: r.score,
+        total: r.total,
+        percent,
+        date: new Date().toISOString(),
+      });
     });
-    localStorage.setItem("examHistory", JSON.stringify(history.slice(0, 20)));
+    localStorage.setItem("examHistory", JSON.stringify(history.slice(0, 50)));
   }, []);
 
-  if (!result) return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <p className="text-gray-500">Loading results...</p>
+  if (!results.length) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: "#0e1117" }}>
+      <p style={{ color: "#6b7280" }}>Loading results...</p>
     </div>
   );
 
-  const { name, subject, score, total, questions, selected } = result;
-  const percent = Math.round((score / total) * 100);
-  const grade = percent >= 70 ? "A" : percent >= 60 ? "B" : percent >= 50 ? "C" : "F";
-  const passed = percent >= 50;
+  const totalScore = results.reduce((a, r) => a + r.score, 0);
+  const totalQuestions = results.reduce((a, r) => a + r.total, 0);
+  const totalPercent = totalQuestions > 0 ? Math.round((totalScore / totalQuestions) * 100) : 0;
+  const passed = totalPercent >= 50;
+  const grade = totalPercent >= 70 ? "A" : totalPercent >= 60 ? "B" : totalPercent >= 50 ? "C" : "F";
+
+  const activeResult = results[activeTab];
+  const activePercent = activeResult?.total > 0 ? Math.round((activeResult.score / activeResult.total) * 100) : 0;
 
   const shareOnWhatsApp = () => {
-    const msg = `🎓 JAMB CBT Result\nName: ${name}\nSubject: ${subject}\nScore: ${score}/${total}\nPercent: ${percent}%\nGrade: ${grade}\n\nPractice at: https://jamb-cbt-chi.vercel.app`;
+    const lines = results.map((r) => `${r.subject}: ${r.score}/${r.total} (${Math.round((r.score/r.total)*100)}%)`).join("\n");
+    const msg = `🎓 JAMB CBT Practice Result\nName: ${name}\n\n${lines}\n\nTotal: ${totalScore}/${totalQuestions} (${totalPercent}%)\nGrade: ${grade}\n\nPractice free at: https://jamb-cbt-chi.vercel.app`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 font-sans max-w-md mx-auto pb-10">
-      <div className="bg-green-600 p-6 text-center rounded-b-3xl mb-6">
-        <a href="/" className="text-white text-left block mb-2 text-sm">← Home</a>
-        <h1 className="text-white text-xl font-bold">Result Summary</h1>
+    <div className="min-h-screen font-sans max-w-md mx-auto pb-10" style={{ background: "#0e1117" }}>
+      {/* Header */}
+      <div className="px-4 pt-8 pb-4" style={{ borderBottom: "1px solid #1e2533" }}>
+        <a href="/" className="text-xs mb-3 block" style={{ color: "#6b7280" }}>← Home</a>
+        <h1 className="text-white font-bold text-xl">Exam Result</h1>
+        <p className="text-sm mt-0.5" style={{ color: "#6b7280" }}>{name} • {new Date().toLocaleDateString()}</p>
       </div>
 
-      <div className="px-4">
-        <div className="bg-white rounded-2xl p-6 mb-4 text-center shadow-sm">
-          <div className="text-6xl mb-3">🎓</div>
-          <span className={`text-xs px-3 py-1 rounded-full font-medium ${passed ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>
-            {passed ? "✓ Pass" : "✗ Fail"}
-          </span>
-          <h2 className="text-gray-800 text-xl font-bold mt-2">{name}</h2>
-          <p className="text-gray-400 text-sm">{subject} · {new Date().toLocaleDateString()}</p>
-          <div className="grid grid-cols-3 gap-4 mt-6 border-t pt-4">
-            <div>
-              <p className="text-gray-400 text-xs">SCORE</p>
-              <p className="text-gray-800 text-2xl font-bold">{score}<span className="text-sm text-gray-400">/{total}</span></p>
-            </div>
-            <div>
-              <p className="text-gray-400 text-xs">PERCENT</p>
-              <p className="text-green-500 text-2xl font-bold">{percent}%</p>
-            </div>
-            <div>
-              <p className="text-gray-400 text-xs">GRADE</p>
-              <p className="text-gray-800 text-2xl font-bold">{grade}</p>
-            </div>
-          </div>
+      <div className="px-4 pt-4">
+        {/* Overall score card */}
+        <div className="rounded-2xl p-5 mb-4 text-center" style={{ background: passed ? "#14532d" : "#450a0a", border: `1px solid ${passed ? "#4ade80" : "#f87171"}` }}>
+          <div className="text-5xl mb-3">{passed ? "🎉" : "📚"}</div>
+          <p className="text-white font-bold text-4xl mb-1">{totalPercent}%</p>
+          <p className="font-bold text-lg mb-1" style={{ color: passed ? "#4ade80" : "#f87171" }}>
+            {passed ? "Pass ✓" : "Fail ✗"} — Grade {grade}
+          </p>
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>
+            {totalScore} / {totalQuestions} correct
+          </p>
+          <p className="text-xs mt-2" style={{ color: "rgba(255,255,255,0.5)" }}>
+            {passed ? "Great performance! Keep it up 🔥" : "Don't give up! Practice more daily 💪"}
+          </p>
         </div>
 
-        <div className={`rounded-2xl p-4 mb-4 flex items-start gap-3 ${passed ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
-          <span className="text-2xl">{passed ? "🌟" : "📚"}</span>
-          <div>
-            <p className={`font-semibold ${passed ? "text-green-700" : "text-red-700"}`}>
-              {passed ? "Excellent Performance!" : "Keep Practicing!"}
-            </p>
-            <p className="text-gray-500 text-sm mt-1">
-              {passed ? "Great job! Review your answers below." : "Don't give up! Practice more to improve."}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex gap-3 mb-6">
-          <a href="/" className="flex-1 bg-white border border-gray-200 text-gray-700 py-3 rounded-2xl font-bold text-center text-sm">
-            🏠 Home
-          </a>
-          <button onClick={shareOnWhatsApp} className="flex-1 bg-green-500 text-white py-3 rounded-2xl font-bold text-sm">
-            📲 Share
-          </button>
-          <a href="/global-leaderboard" className="flex-1 bg-yellow-400 text-white py-3 rounded-2xl font-bold text-center text-sm">
-            🏆 Ranks
-          </a>
-        </div>
-
-        <h2 className="text-gray-800 font-bold text-lg mb-3">
-          Answer Breakdown
-          <span className="ml-2 text-xs font-normal text-gray-400">🟢 Correct &nbsp; 🔴 Wrong</span>
-        </h2>
-
-        <div className="flex flex-col gap-4">
-          {questions.map((q, i) => {
-            const userAnswer = selected[i];
-            const isCorrect = userAnswer === q.answer;
-            const isSkipped = !userAnswer;
+        {/* Per-subject breakdown */}
+        <div className="rounded-2xl overflow-hidden mb-4" style={{ background: "#13171f", border: "1px solid #1e2533" }}>
+          <p className="px-4 py-3 text-xs font-bold uppercase tracking-wider" style={{ color: "#6b7280", borderBottom: "1px solid #1e2533" }}>Subject Scores</p>
+          {results.map((r, i) => {
+            const pct = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
             return (
-              <div key={i} className={`bg-white rounded-2xl p-4 shadow-sm border-l-4 ${isSkipped ? "border-gray-300" : isCorrect ? "border-green-500" : "border-red-500"}`}>
-                <div className="flex justify-between items-center mb-2">
-                  <p className="text-gray-400 text-xs font-medium">Question {i + 1}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isSkipped ? "bg-gray-100 text-gray-500" : isCorrect ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>
-                    {isSkipped ? "Skipped" : isCorrect ? "✓ Correct" : "✗ Wrong"}
-                  </span>
+              <div key={i} className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: i < results.length - 1 ? "1px solid #1e2533" : "none" }}>
+                <div className="flex-1">
+                  <p className="text-white text-sm font-medium">{r.subject}</p>
+                  <div className="w-full h-1.5 rounded-full mt-1.5" style={{ background: "#1e2533" }}>
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct >= 70 ? "#4ade80" : pct >= 50 ? "#fbbf24" : "#f87171" }} />
+                  </div>
                 </div>
-                <p className="text-gray-800 text-sm mb-3 leading-relaxed" dangerouslySetInnerHTML={{ __html: q.question }} />
-                <div className="flex flex-col gap-1.5">
-                  {(["a", "b", "c", "d"] as const).map((opt) => (
-                    <div key={opt} className={`px-3 py-2 rounded-xl text-sm flex items-center gap-2 ${opt === q.answer ? "bg-green-100 text-green-700 font-medium" : opt === userAnswer && !isCorrect ? "bg-red-100 text-red-600" : "bg-gray-50 text-gray-600"}`}>
-                      <span className="font-bold uppercase">{opt}.</span>
-                      <span dangerouslySetInnerHTML={{ __html: q.option[opt] }} />
-                      {opt === q.answer && <span className="ml-auto">✓</span>}
-                      {opt === userAnswer && !isCorrect && <span className="ml-auto">✗</span>}
-                    </div>
-                  ))}
+                <div className="text-right flex-shrink-0">
+                  <p className="font-bold text-sm" style={{ color: pct >= 70 ? "#4ade80" : pct >= 50 ? "#fbbf24" : "#f87171" }}>{pct}%</p>
+                  <p className="text-xs" style={{ color: "#6b7280" }}>{r.score}/{r.total}</p>
                 </div>
               </div>
             );
           })}
         </div>
+
+        {/* Action buttons */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <a href="/" className="py-3 rounded-2xl font-bold text-center text-sm text-white" style={{ background: "#1e2533" }}>🏠 Home</a>
+          <button onClick={shareOnWhatsApp} className="py-3 rounded-2xl font-bold text-sm text-white" style={{ background: "#16a34a" }}>📲 Share</button>
+          <a href="/global-leaderboard" className="py-3 rounded-2xl font-bold text-center text-sm text-white" style={{ background: "#92400e" }}>🏆 Ranks</a>
+        </div>
+
+        {/* Answer breakdown toggle */}
+        <button onClick={() => setShowBreakdown(!showBreakdown)}
+          className="w-full py-3 rounded-2xl font-bold text-sm mb-4"
+          style={{ background: "#13171f", color: "#9ca3af", border: "1px solid #1e2533" }}>
+          {showBreakdown ? "Hide" : "Show"} Answer Breakdown ▾
+        </button>
+
+        {showBreakdown && (
+          <>
+            {/* Subject tabs */}
+            {results.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto mb-4" style={{ scrollbarWidth: "none" }}>
+                {results.map((r, i) => (
+                  <button key={i} onClick={() => setActiveTab(i)}
+                    className="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold"
+                    style={{ background: activeTab === i ? "#16a34a" : "#1e2533", color: "#fff" }}>
+                    {r.subject.split(" ")[0]}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Questions for active subject */}
+            <div className="flex flex-col gap-3">
+              {activeResult?.questions.map((q, i) => {
+                const userAnswer = activeResult.selected[i];
+                const isCorrect = userAnswer === q.answer;
+                const isSkipped = !userAnswer;
+                return (
+                  <div key={i} className="rounded-2xl p-4" style={{
+                    background: "#13171f",
+                    borderLeft: `4px solid ${isSkipped ? "#374151" : isCorrect ? "#4ade80" : "#f87171"}`
+                  }}>
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-xs font-bold" style={{ color: "#6b7280" }}>Q{i + 1}</p>
+                      <span className="text-xs px-2 py-0.5 rounded-lg font-bold"
+                        style={{ background: isSkipped ? "#1e2533" : isCorrect ? "#14532d" : "#450a0a", color: isSkipped ? "#6b7280" : isCorrect ? "#4ade80" : "#f87171" }}>
+                        {isSkipped ? "Skipped" : isCorrect ? "✓ Correct" : "✗ Wrong"}
+                      </span>
+                    </div>
+                    <p className="text-white text-sm mb-3 leading-relaxed">{q.question}</p>
+                    <div className="flex flex-col gap-1.5">
+                      {(["a", "b", "c", "d"] as const).map((opt) => (
+                        <div key={opt} className="px-3 py-2 rounded-xl text-sm flex items-center gap-2"
+                          style={{
+                            background: opt === q.answer ? "#14532d" : opt === userAnswer && !isCorrect ? "#450a0a" : "#1e2533",
+                            color: opt === q.answer ? "#4ade80" : opt === userAnswer && !isCorrect ? "#f87171" : "#9ca3af",
+                          }}>
+                          <span className="font-bold text-xs">{opt.toUpperCase()}.</span>
+                          <span>{q.option[opt]}</span>
+                          {opt === q.answer && <span className="ml-auto text-xs">✓</span>}
+                          {opt === userAnswer && !isCorrect && <span className="ml-auto text-xs">✗</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
