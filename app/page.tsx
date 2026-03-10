@@ -305,6 +305,8 @@ export default function Home() {
                 { label: "Quiz Battle", desc: "Create room and challenge a friend", icon: "⚔️", href: "/battle" },
                 { label: "Tournament Mode", desc: "8 players, one champion", icon: "🏆", href: "/battle" },
                 { label: "Watch Live Battle", desc: "Spectate ongoing battles", icon: "🔴", href: "/watch" },
+                { label: "Flashcards", desc: "Memorize with AI flashcards", icon: "🃏", href: "/flashcards" },
+                { label: "JAMB Novels", desc: "Set books and summaries", icon: "📚", href: "/jamb-novel" },
                 { label: "Local Leaderboard", desc: "Your group ranking", icon: "🏅", href: "/leaderboard" },
                 { label: "Global Leaderboard", desc: "All of Nigeria", icon: "🌍", href: "/global-leaderboard" },
               ].map((item, i, arr) => (
@@ -340,6 +342,8 @@ export default function Home() {
                 { label: "Account & Settings", desc: "Profile, stats, preferences", icon: "⚙️", href: "/settings" },
                 { label: "Study Wizard", desc: "AI-powered study plan", icon: "🧙", href: "/study-wizard" },
                 { label: "Study Mode", desc: "Read notes, then practice", icon: "📖", href: "/study-mode" },
+                { label: "Flashcards", desc: "AI flashcards for quick revision", icon: "🃏", href: "/flashcards" },
+                { label: "JAMB Novels", desc: "Set books, characters, themes", icon: "📚", href: "/jamb-novel" },
                 { label: "My History", desc: "Past exam results", icon: "📊", href: "/history" },
                 { label: "Calculator", desc: "Scientific calculator", icon: "🧮", href: "/calculator" },
                 { label: "About", desc: "About this app", icon: "ℹ️", href: "/about" },
