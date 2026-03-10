@@ -3,7 +3,46 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const NOVELS = [
-  {
+    {
+    title: "The Lekki Headmaster",
+    author: "Kabir Alabi Garba",
+    cover: "🏫",
+    color: "#14532d",
+    year: "2026 — Current JAMB Novel",
+    summary: "The story follows Mr. Adebepo Adewale (Bepo), the dedicated principal of Stardom Schools in Lekki, Lagos. Bepo faces a life-changing dilemma — should he leave Nigeria to join his wife and children in the UK (Japa syndrome), or stay back and continue fixing the broken Nigerian education system? The novel explores leadership, integrity, and the cost of dedication.",
+    themes: ["Japa Syndrome", "Leadership and Integrity", "Education in Nigeria", "Family vs Career", "Dedication and Sacrifice", "Corruption in Schools"],
+    characters: [
+      { name: "Mr. Bepo (Adebepo Adewale)", role: "Main character — dedicated principal of Stardom Schools, nicknamed 'The Lekki Headmaster'. Torn between relocating to UK and staying in Nigeria." },
+      { name: "Seri", role: "Bepo's wife — already in the UK with their children Nike and Kike, pressuring Bepo to join them." },
+      { name: "Mrs. Ibidun Gloss", role: "Managing Director of Stardom Schools — called when Bepo breaks down at assembly." },
+      { name: "Mrs. Grace Apeh", role: "Vice Principal — helps Bepo when he breaks down and supports him throughout." },
+      { name: "Audu", role: "A key character in the school community." },
+      { name: "Mr. Fafore", role: "A teacher whose case highlights issues of fairness and professionalism at Open Day." },
+    ],
+    chapters: [
+      { number: 1, title: "The Breakdown", summary: "Bepo breaks down crying at morning assembly. Staff are shocked. After 5 days he reveals his dilemma — he is leaving for the UK." },
+      { number: 2, title: "The Lekki Headmaster", summary: "Explores Bepo's leadership style, how he earned his nickname, and his deep love for teaching at Stardom Schools." },
+      { number: 3, title: "Migration Tales", summary: "Bepo reflects on the Japa syndrome — friends and colleagues who have left Nigeria and what happened to them." },
+      { number: 4, title: "School Life", summary: "The innovative fee restructuring that moved 80% of students to boarding house, improving punctuality." },
+      { number: 5, title: "A Snake in the Roof", summary: "Financial irregularities are uncovered during inspection — themes of accountability and corruption." },
+      { number: 6, title: "The Case of Mr. Fafore", summary: "Open Day confrontation highlighting fairness and support for educators." },
+      { number: 7, title: "Troubles at Beesway", summary: "Bepo reflects on his earlier career and the challenges he faced." },
+      { number: 8, title: "The Final Decision", summary: "A farewell party is organized. Bepo stands at the crossroads — board the plane to UK or stay in Nigeria?" },
+    ],
+    jamb_tips: [
+      "Know Bepo's full name — Mr. Adebepo Adewale, principal of Stardom Schools in Lekki",
+      "Understand the Japa syndrome — the pressure to leave Nigeria for abroad",
+      "Know why Bepo breaks down at assembly at the start of the novel",
+      "Know that Bepo's wife (Seri) and children (Nike and Kike) are already in UK",
+      "Understand the theme of dedication vs family pressure",
+      "Know the financial irregularities chapter — JAMB loves asking about this",
+      "JAMB will set 10 questions from this novel in Use of English",
+      "Know Bepo earned his nickname from mimicking characters in the TV show 'Village Headmaster'",
+      "Understand the final decision — does Bepo leave or stay? This is the climax",
+      "Know Mrs. Grace Apeh (VP) and Mrs. Ibidun Gloss (MD) roles",
+    ],
+  },
+  {  
     title: "Sweet Sixteen",
     author: "Bolaji Abdullahi",
     cover: "📘",
