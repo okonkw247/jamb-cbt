@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import TopicDiagram from "@/components/TopicDiagram";
+import AITutor from "@/components/AITutor";
 
 const SUBJECTS: Record<string, { icon: string; color: string; topics: string[] }> = {
   "Use of English": { icon: "📖", color: "from-blue-600 to-blue-800", topics: ["Comprehension", "Summary Writing", "Lexis and Structure", "Oral English", "Figures of Speech", "Synonyms and Antonyms", "Sentence Structure", "Punctuation"] },
@@ -374,6 +375,7 @@ export default function StudyMode() {
           </div>
         </div>
       )}
+    <AITutor subject={selectedSubject} topic={selectedTopic} />
     </div>
   );
 }
