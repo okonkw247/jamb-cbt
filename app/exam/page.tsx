@@ -1,9 +1,7 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { saveQuestions, getQuestions } from "@/lib/questionCache";
-
-const ACCESS_TOKEN = "QB-de92a6179a6e85d1d140";
 
 interface Question {
   id: number;
@@ -27,116 +25,91 @@ const subjectMap: { [key: string]: string } = {
   "Agriculture": "agriculture",
 };
 
+const subjectColors: { [key: string]: { bg: string; tab: string; accent: string } } = {
+  "Use of English":  { bg: "#0e1f0e", tab: "#14532d", accent: "#4ade80" },
+  "Mathematics":     { bg: "#1a0e0e", tab: "#7f1d1d", accent: "#f87171" },
+  "Physics":         { bg: "#0e1a1a", tab: "#164e63", accent: "#22d3ee" },
+  "Chemistry":       { bg: "#1a0e1a", tab: "#581c87", accent: "#c084fc" },
+  "Biology":         { bg: "#0e1a0e", tab: "#14532d", accent: "#86efac" },
+  "Economics":       { bg: "#1a1a0e", tab: "#713f12", accent: "#fbbf24" },
+  "Government":      { bg: "#0e0e1a", tab: "#1e3a8a", accent: "#60a5fa" },
+  "Literature":      { bg: "#1a0e14", tab: "#881337", accent: "#fb7185" },
+  "Geography":       { bg: "#0e1a1a", tab: "#134e4a", accent: "#2dd4bf" },
+  "Commerce":        { bg: "#1a140e", tab: "#7c2d12", accent: "#fb923c" },
+  "Accounting":      { bg: "#141a0e", tab: "#3f6212", accent: "#a3e635" },
+  "Agriculture":     { bg: "#0e1a0e", tab: "#166534", accent: "#4ade80" },
+};
+
 export default function Exam() {
   const searchParams = useSearchParams();
   const router = useRouter();
-
   const name = searchParams.get("name") || "Candidate";
   const subjectsList = searchParams.get("subjects")?.split(",") || ["Use of English"];
 
-  const [subject, setSubject] = useState(subjectsList[0]);
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const cache = useState<{ [key: string]: Question[] }>({})[0];
+  const [activeSubject, setActiveSubject] = useState(subjectsList[0]);
+  const [allQuestions, setAllQuestions] = useState<{ [key: string]: Question[] }>({});
+  const [loadingSubjects, setLoadingSubjects] = useState<{ [key: string]: boolean }>({});
+  const [allSelected, setAllSelected] = useState<{ [subject: string]: { [idx: number]: string } }>({});
   const [current, setCurrent] = useState(0);
-  const [selected, setSelected] = useState<{ [key: number]: string }>({});
-  const [flagged, setFlagged] = useState<number[]>([]);
+  const [flagged, setFlagged] = useState<{ [subject: string]: number[] }>({});
   const [timeLeft, setTimeLeft] = useState(2 * 60 * 60);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
   const [calcDisplay, setCalcDisplay] = useState("0");
   const [calcExpression, setCalcExpression] = useState("");
   const [calcEvaluated, setCalcEvaluated] = useState(false);
+  const [showGoto, setShowGoto] = useState(false);
+  const submitted = useRef(false);
 
-const calcNumber = (val: string) => {
-  if (calcEvaluated) { setCalcDisplay(val); setCalcExpression(val); setCalcEvaluated(false); return; }
-  setCalcDisplay(calcDisplay === "0" ? val : calcDisplay + val);
-  setCalcExpression(calcExpression + val);
-};
-const calcOperator = (op: string) => { setCalcEvaluated(false); setCalcExpression(calcExpression + op); setCalcDisplay(op); };
-const calcEquals = () => {
-  try {
-    const result = Function('"use strict"; return (' + calcExpression + ')')();
-    const rounded = Math.round(result * 1000000) / 1000000;
-    setCalcDisplay(String(rounded));
-    setCalcExpression(String(rounded));
-    setCalcEvaluated(true);
-  } catch { setCalcDisplay("Error"); setCalcExpression(""); }
-};
-const calcClear = () => { setCalcDisplay("0"); setCalcExpression(""); setCalcEvaluated(false); };
-const calcBack = () => {
-  if (calcDisplay.length === 1) { setCalcDisplay("0"); return; }
-  setCalcDisplay(calcDisplay.slice(0, -1));
-  setCalcExpression(calcExpression.slice(0, -1));
-};
+  const colors = subjectColors[activeSubject] || subjectColors["Use of English"];
+  const questions = allQuestions[activeSubject] || [];
+  const selected = allSelected[activeSubject] || {};
 
+  // Load ALL subjects in parallel on mount
+  useEffect(() => {
+    const loadAll = async () => {
+      const loading: { [key: string]: boolean } = {};
+      subjectsList.forEach((s) => (loading[s] = true));
+      setLoadingSubjects(loading);
 
-  const fetchQuestions = useCallback(async (subjectName: string) => {
-    setLoading(true);
-    setError(false);
-    setCurrent(0);
-    setSelected({});
-    setFlagged([]);
-    try {
-      // Check memory cache first
-      if (cache[subjectName]) {
-        setQuestions(cache[subjectName]);
-        setLoading(false);
-        return;
-      }
-
-      // Try API first
-      try {
-        const res = await fetch(`/api/questions?subject=${encodeURIComponent(subjectName)}`);
-        const data = await res.json();
-        if (data.data && data.data.length > 0) {
-          setQuestions(data.data);
-          cache[subjectName] = data.data;
-          // Save to IndexedDB for offline use
-          await saveQuestions(subjectName, data.data);
-          setLoading(false);
-          return;
+      await Promise.all(subjectsList.map(async (subjectName) => {
+        try {
+          const cached = await getQuestions(subjectName);
+          if (cached && cached.length > 0) {
+            setAllQuestions((prev) => ({ ...prev, [subjectName]: cached }));
+            setLoadingSubjects((prev) => ({ ...prev, [subjectName]: false }));
+          }
+          const res = await fetch(`/api/questions?subject=${encodeURIComponent(subjectName)}`);
+          const data = await res.json();
+          if (data.data && data.data.length > 0) {
+            setAllQuestions((prev) => ({ ...prev, [subjectName]: data.data }));
+            await saveQuestions(subjectName, data.data);
+          }
+        } catch {
+          const cached = await getQuestions(subjectName);
+          if (cached && cached.length > 0) {
+            setAllQuestions((prev) => ({ ...prev, [subjectName]: cached }));
+          }
+        } finally {
+          setLoadingSubjects((prev) => ({ ...prev, [subjectName]: false }));
         }
-      } catch {
-        // API failed - fall through to cached questions
-      }
-
-      // API failed or empty - try IndexedDB cache
-      const cached = await getQuestions(subjectName);
-      if (cached && cached.length > 0) {
-        setQuestions(cached);
-        cache[subjectName] = cached;
-        // Show user they are using cached questions
-        console.log("Using cached questions for", subjectName);
-      } else {
-        setError(true);
-      }
-    } catch {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
+      }));
+    };
+    loadAll();
   }, []);
 
+  // Reset current question when switching subjects
+  useEffect(() => { setCurrent(0); }, [activeSubject]);
 
-  useEffect(() => {
-    fetchQuestions(subject);
-  }, [subject, fetchQuestions]);
-
-  // Countdown timer
+  // Timer
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleSubmit();
-          return 0;
-        }
+        if (prev <= 1) { clearInterval(timer); handleSubmit(); return 0; }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [questions, selected]);
+  }, []);
 
   const formatTime = (secs: number) => {
     const h = Math.floor(secs / 3600).toString().padStart(2, "0");
@@ -146,256 +119,278 @@ const calcBack = () => {
   };
 
   const handleSubmit = () => {
-    const score = questions.filter((q, i) => selected[i] === q.answer).length;
-    sessionStorage.setItem("examResult", JSON.stringify({
-      name,
-      subject,
-      score,
-      total: questions.length,
-      questions,
-      selected,
+    if (submitted.current) return;
+    submitted.current = true;
+    const results: any[] = [];
+    subjectsList.forEach((subjectName) => {
+      const qs = allQuestions[subjectName] || [];
+      const sel = allSelected[subjectName] || {};
+      const score = qs.filter((q, i) => sel[i] === q.answer).length;
+      results.push({ subject: subjectName, score, total: qs.length, questions: qs, selected: sel });
+    });
+    sessionStorage.setItem("examResult", JSON.stringify({ name, results, multiSubject: true }));
+    router.push("/results");
+  };
+
+  const setAnswer = (opt: string) => {
+    setAllSelected((prev) => ({
+      ...prev,
+      [activeSubject]: { ...(prev[activeSubject] || {}), [current]: opt },
     }));
-    router.push(`/results`);
   };
 
   const toggleFlag = () => {
-    setFlagged((prev) =>
-      prev.includes(current)
-        ? prev.filter((i) => i !== current)
-        : [...prev, current]
-    );
+    setFlagged((prev) => {
+      const curr = prev[activeSubject] || [];
+      return {
+        ...prev,
+        [activeSubject]: curr.includes(current) ? curr.filter((i) => i !== current) : [...curr, current],
+      };
+    });
   };
 
-  const answeredCount = Object.keys(selected).length;
+  const totalAnswered = subjectsList.reduce((acc, s) => acc + Object.keys(allSelected[s] || {}).length, 0);
+  const totalQuestions = subjectsList.reduce((acc, s) => acc + (allQuestions[s]?.length || 0), 0);
+  const subjectFlagged = flagged[activeSubject] || [];
+  const isLoading = loadingSubjects[activeSubject];
 
-  if (loading) return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center gap-4 px-8">
-      <div className="text-5xl mb-2">📚</div>
-      <p className="text-gray-800 font-bold text-lg">Preparing your exam</p>
-      <p className="text-gray-400 text-sm">Loading {subject} questions...</p>
-      <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
-        <div className="bg-green-500 h-2 rounded-full animate-pulse" style={{ width: "70%" }} />
-      </div>
-      <p className="text-gray-400 text-xs">This may take a few seconds</p>
-    </div>
-  );
-
-  if (error) return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center gap-4 px-4">
-      <div className="text-5xl">😕</div>
-      <p className="text-gray-700 font-semibold text-center">Failed to load questions for {subject}</p>
-      <button
-        onClick={() => fetchQuestions(subject)}
-        className="bg-green-500 text-white px-6 py-3 rounded-xl font-medium"
-      >
-        Try Again
-      </button>
-      <a href="/" className="text-gray-400 text-sm">Go Home</a>
-    </div>
-  );
+  // Calculator
+  const calcNumber = (val: string) => {
+    if (calcEvaluated) { setCalcDisplay(val); setCalcExpression(val); setCalcEvaluated(false); return; }
+    setCalcDisplay(calcDisplay === "0" ? val : calcDisplay + val);
+    setCalcExpression(calcExpression + val);
+  };
+  const calcOperator = (op: string) => { setCalcEvaluated(false); setCalcExpression(calcExpression + op); setCalcDisplay(op); };
+  const calcEquals = () => {
+    try {
+      const result = Function('"use strict"; return (' + calcExpression + ')')();
+      const rounded = Math.round(result * 1000000) / 1000000;
+      setCalcDisplay(String(rounded)); setCalcExpression(String(rounded)); setCalcEvaluated(true);
+    } catch { setCalcDisplay("Error"); setCalcExpression(""); }
+  };
+  const calcClear = () => { setCalcDisplay("0"); setCalcExpression(""); setCalcEvaluated(false); };
+  const calcBack = () => {
+    if (calcDisplay.length === 1) { setCalcDisplay("0"); return; }
+    setCalcDisplay(calcDisplay.slice(0, -1));
+    setCalcExpression(calcExpression.slice(0, -1));
+  };
 
   const q = questions[current];
-  if (!q) return null;
-
-  const options = ["a", "b", "c", "d"] as const;
 
   return (
-    <div className="min-h-screen bg-gray-100 font-sans max-w-md mx-auto pb-10">
-      {/* Header */}
-      <div className="bg-orange-500 p-4 sticky top-0 z-10">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-orange-200 text-xs font-medium">JAMB CBT 2024</p>
-            <select
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              className="bg-transparent text-white font-bold text-lg outline-none cursor-pointer"
-            >
-              {subjectsList.map((s) => (
-                <option key={s} value={s} className="text-black">{s}</option>
-              ))}
-            </select>
-          </div>
-          <button
-            onClick={() => {
-              if (confirm(`Submit exam? You answered ${answeredCount} of ${questions.length} questions.`)) {
-                handleSubmit();
-              }
-            }}
-            className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium"
-          >
-            Submit
-          </button>
-        </div>
+    <div className="min-h-screen font-sans max-w-md mx-auto flex flex-col" style={{ background: colors.bg, transition: "background 0.3s" }}>
 
-        {/* Timer */}
-        <div className={`rounded-xl mt-3 px-4 py-2 flex justify-between items-center ${timeLeft < 300 ? "bg-red-600" : "bg-white bg-opacity-20"}`}>
-          <span className="text-white font-bold text-lg">🔴 {formatTime(timeLeft)}</span>
-          <span className="text-white text-xs">
-            {timeLeft < 300 ? "⚠️ Less than 5m left!" : `${answeredCount}/${questions.length} answered`}
-          </span>
+      {/* Top bar - timer + submit */}
+      <div className="sticky top-0 z-20 px-4 py-2 flex items-center justify-between" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <div>
+          <p className="text-white text-xs font-bold">{name}</p>
+          <p className="text-xs" style={{ color: "#9ca3af" }}>{totalAnswered}/{totalQuestions} answered</p>
         </div>
+        <div className={`px-4 py-1.5 rounded-xl font-bold text-base ${timeLeft < 300 ? "bg-red-600 text-white animate-pulse" : "text-white"}`}
+          style={{ background: timeLeft < 300 ? "#dc2626" : "rgba(255,255,255,0.1)" }}>
+          ⏱ {formatTime(timeLeft)}
+        </div>
+        <button onClick={() => { if (confirm(`Submit exam?\n${totalAnswered} of ${totalQuestions} answered.`)) handleSubmit(); }}
+          className="px-3 py-1.5 rounded-xl text-xs font-bold" style={{ background: colors.tab, color: "#fff" }}>
+          Submit ✓
+        </button>
       </div>
 
-      <div className="px-4 py-4">
-        {/* Question header */}
-        <div className="flex justify-between items-center mb-1">
-          <h2 className="text-gray-800 text-lg font-bold">Question {current + 1}</h2>
-          <span className="text-gray-400 text-sm">of {questions.length}</span>
-        </div>
+      {/* Subject tabs */}
+      <div className="flex overflow-x-auto" style={{ background: "rgba(0,0,0,0.4)", scrollbarWidth: "none", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        {subjectsList.map((s) => {
+          const sColors = subjectColors[s] || subjectColors["Use of English"];
+          const sAnswered = Object.keys(allSelected[s] || {}).length;
+          const sTotal = allQuestions[s]?.length || 0;
+          const isActive = activeSubject === s;
+          const isLoadingTab = loadingSubjects[s];
+          return (
+            <button key={s} onClick={() => setActiveSubject(s)}
+              className="flex-shrink-0 px-4 py-2.5 text-xs font-bold transition-all relative"
+              style={{ color: isActive ? "#fff" : "#6b7280", borderBottom: isActive ? `2px solid ${sColors.accent}` : "2px solid transparent" }}>
+              {s.split(" ")[0]}
+              {isLoadingTab ? (
+                <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: sColors.accent }} />
+              ) : (
+                <span className="ml-1 text-xs" style={{ color: sAnswered === sTotal && sTotal > 0 ? sColors.accent : "#6b7280" }}>
+                  {sAnswered}/{sTotal}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
 
-        {/* Progress bar */}
-        <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4">
-          <div
-            className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
-            style={{ width: `${((current + 1) / questions.length) * 100}%` }}
-          />
+      {/* Loading state */}
+      {isLoading && (
+        <div className="flex-1 flex flex-col items-center justify-center py-20">
+          <div className="text-4xl mb-4 animate-pulse">📚</div>
+          <p className="text-white font-bold mb-1">Loading {activeSubject}...</p>
+          <p className="text-xs mb-4" style={{ color: "#6b7280" }}>Fetching questions</p>
+          <div className="w-48 h-1.5 rounded-full overflow-hidden" style={{ background: "#1e2533" }}>
+            <div className="h-full rounded-full animate-pulse" style={{ background: colors.accent, width: "60%" }} />
+          </div>
         </div>
+      )}
 
-        {/* Question */}
-        <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
-          <p className="text-gray-800 leading-relaxed">{q.question}</p>
+      {/* No questions */}
+      {!isLoading && !q && (
+        <div className="flex-1 flex flex-col items-center justify-center py-20 px-4">
+          <div className="text-4xl mb-4">😕</div>
+          <p className="text-white font-bold mb-4">Failed to load {activeSubject} questions</p>
+          <button onClick={() => window.location.reload()} className="px-6 py-3 rounded-xl font-bold text-white" style={{ background: colors.tab }}>
+            Retry
+          </button>
         </div>
+      )}
 
-        {/* Options */}
-        <div className="flex flex-col gap-3 mb-6">
-          {options.map((opt) => (
-            <div
-              key={opt}
-              onClick={() => setSelected({ ...selected, [current]: opt })}
-              className={`bg-white rounded-2xl p-4 flex items-center gap-4 cursor-pointer border-2 transition-all shadow-sm ${
-                selected[current] === opt
-                  ? "border-green-500 bg-green-50"
-                  : "border-transparent hover:border-gray-200"
-              }`}
-            >
-              <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                selected[current] === opt
-                  ? "bg-green-500 border-green-500"
-                  : "border-gray-300"
-              }`}>
-                {selected[current] === opt && (
-                  <span className="text-white text-xs font-bold">✓</span>
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="text-gray-400 text-xs mb-0.5">Option {opt.toUpperCase()}</p>
-                <p className="text-gray-800">{q.option[opt]}</p>
-              </div>
+      {/* Question */}
+      {!isLoading && q && (
+        <div className="flex-1 px-4 py-4">
+          {/* Question header */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm px-3 py-1 rounded-lg" style={{ background: colors.tab, color: "#fff" }}>Q.{current + 1}</span>
+              <span className="text-xs" style={{ color: "#6b7280" }}>of {questions.length}</span>
             </div>
-          ))}
-        </div>
-
-        {/* Question number grid */}
-        <div className="bg-white rounded-2xl p-3 mb-4 shadow-sm">
-          <p className="text-gray-400 text-xs mb-2">Question Navigator</p>
-          <div className="flex gap-2 flex-wrap">
-            {questions.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrent(i)}
-                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
-                  i === current
-                    ? "bg-blue-500 text-white scale-110"
-                    : flagged.includes(i)
-                    ? "bg-yellow-400 text-white"
-                    : selected[i]
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {i + 1}
+            <div className="flex items-center gap-2">
+              <button onClick={toggleFlag}
+                className="px-3 py-1 rounded-lg text-xs font-bold"
+                style={{ background: subjectFlagged.includes(current) ? "#ca8a04" : "rgba(255,255,255,0.1)", color: "#fff" }}>
+                🚩 {subjectFlagged.includes(current) ? "Flagged" : "Flag"}
               </button>
-            ))}
+            </div>
           </div>
-          <div className="flex gap-4 mt-3 text-xs text-gray-400">
-            <span>🟦 Current</span>
-            <span>🟩 Answered</span>
-            <span>🟨 Flagged</span>
-            <span>⬜ Unanswered</span>
-          </div>
-        </div>
 
-        {/* Navigation */}
-        <div className="flex justify-between items-center gap-3">
-          <button
-            onClick={() => setCurrent((p) => Math.max(0, p - 1))}
-            disabled={current === 0}
-            className="flex-1 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-medium disabled:opacity-40"
-          >
-            ← Prev
-          </button>
-          <button
-            onClick={toggleFlag}
-            className={`px-5 py-3 rounded-xl font-medium transition-all ${
-              flagged.includes(current)
-                ? "bg-yellow-400 text-white"
-                : "bg-white border border-gray-200 text-gray-700"
-            }`}
-          >
-            🚩 Flag
-          </button>
-          <button
-            onClick={() => setCurrent((p) => Math.min(questions.length - 1, p + 1))}
-            disabled={current === questions.length - 1}
-            className="flex-1 bg-green-500 text-white py-3 rounded-xl font-medium disabled:opacity-40"
-          >
-            Next →
+          {/* Progress bar */}
+          <div className="w-full h-1 rounded-full mb-4" style={{ background: "rgba(255,255,255,0.1)" }}>
+            <div className="h-full rounded-full transition-all" style={{ background: colors.accent, width: `${((current + 1) / questions.length) * 100}%` }} />
+          </div>
+
+          {/* Question text */}
+          <div className="rounded-2xl p-4 mb-4" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <p className="text-white text-sm leading-relaxed">{q.question}</p>
+          </div>
+
+          {/* Options */}
+          <div className="flex flex-col gap-2 mb-5">
+            {(["a", "b", "c", "d"] as const).map((opt) => {
+              const isSelected = selected[current] === opt;
+              return (
+                <button key={opt} onClick={() => setAnswer(opt)}
+                  className="flex items-center gap-3 p-4 rounded-2xl text-left w-full transition-all active:scale-95"
+                  style={{
+                    background: isSelected ? colors.tab : "rgba(255,255,255,0.04)",
+                    border: `1.5px solid ${isSelected ? colors.accent : "rgba(255,255,255,0.08)"}`,
+                  }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-xs"
+                    style={{ background: isSelected ? colors.accent : "rgba(255,255,255,0.1)", color: isSelected ? "#000" : "#9ca3af" }}>
+                    {opt.toUpperCase()}
+                  </div>
+                  <p className="text-sm" style={{ color: isSelected ? "#fff" : "#d1d5db" }}>{q.option[opt]}</p>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Question grid navigator */}
+          <div className="rounded-2xl p-3 mb-4" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold" style={{ color: "#6b7280" }}>Question Navigator</p>
+              <button onClick={() => setShowGoto(!showGoto)} className="text-xs" style={{ color: colors.accent }}>
+                {showGoto ? "Hide" : "Show all"}
+              </button>
+            </div>
+            {showGoto && (
+              <div className="flex gap-1.5 flex-wrap max-h-32 overflow-y-auto">
+                {questions.map((_, i) => (
+                  <button key={i} onClick={() => { setCurrent(i); setShowGoto(false); }}
+                    className="w-8 h-8 rounded-lg text-xs font-bold transition-all"
+                    style={{
+                      background: i === current ? colors.accent : subjectFlagged.includes(i) ? "#ca8a04" : selected[i] ? colors.tab : "rgba(255,255,255,0.08)",
+                      color: i === current ? "#000" : "#fff",
+                    }}>
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+            {!showGoto && (
+              <div className="flex gap-3 text-xs" style={{ color: "#6b7280" }}>
+                <span>🟩 Answered ({Object.keys(selected).length})</span>
+                <span>🟨 Flagged ({subjectFlagged.length})</span>
+                <span>⬛ Left ({questions.length - Object.keys(selected).length})</span>
+              </div>
+            )}
+          </div>
+
+          {/* Navigation */}
+          <div className="flex items-center gap-2">
+            <button onClick={() => setCurrent((p) => Math.max(0, p - 1))} disabled={current === 0}
+              className="flex-1 py-3.5 rounded-2xl font-bold text-sm disabled:opacity-30"
+              style={{ background: "rgba(255,255,255,0.08)", color: "#fff" }}>
+              ‹ Back
+            </button>
+            <button onClick={() => setShowGoto(!showGoto)}
+              className="px-4 py-3.5 rounded-2xl font-bold text-sm"
+              style={{ background: "rgba(255,255,255,0.08)", color: "#fff" }}>
+              Goto ▾
+            </button>
+            <button onClick={() => setCurrent((p) => Math.min(questions.length - 1, p + 1))} disabled={current === questions.length - 1}
+              className="flex-1 py-3.5 rounded-2xl font-bold text-sm disabled:opacity-30"
+              style={{ background: colors.tab, color: "#fff" }}>
+              Next ›
+            </button>
+          </div>
+
+          {/* Submit button */}
+          <button onClick={() => { if (confirm(`Submit exam?\n${totalAnswered} of ${totalQuestions} answered.`)) handleSubmit(); }}
+            className="w-full py-4 rounded-2xl font-bold text-sm mt-3"
+            style={{ background: "#14532d", color: "#4ade80", border: "1px solid #4ade80" }}>
+            ■ Submit Exam
           </button>
         </div>
-      </div>
-    {/* Floating Calculator Button */}
-      <button
-        onClick={() => setShowCalc(!showCalc)}
-        className="fixed bottom-6 right-6 bg-green-500 text-white w-14 h-14 rounded-full text-2xl shadow-lg z-50"
-      >
+      )}
+
+      {/* Calculator button */}
+      <button onClick={() => setShowCalc(!showCalc)}
+        className="fixed bottom-6 right-4 w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-xl z-50"
+        style={{ background: colors.tab }}>
         🧮
       </button>
 
-      {/* Calculator Popup */}
+      {/* Calculator */}
       {showCalc && (
-        <div className="fixed bottom-24 right-4 bg-white rounded-2xl shadow-2xl p-4 z-50 w-72">
+        <div className="fixed bottom-20 right-4 rounded-2xl shadow-2xl p-4 z-50 w-68" style={{ background: "#13171f", border: "1px solid #1e2533", width: "270px" }}>
           <div className="flex justify-between items-center mb-3">
-            <p className="font-bold text-gray-700">Calculator</p>
-            <button onClick={() => setShowCalc(false)} className="text-gray-400 text-xl">✕</button>
+            <p className="text-white font-bold text-sm">Calculator</p>
+            <button onClick={() => setShowCalc(false)} style={{ color: "#6b7280" }}>✕</button>
           </div>
-          <div className="bg-gray-900 rounded-xl p-3 mb-3">
-            <p className="text-gray-400 text-xs text-right">{calcExpression || " "}</p>
+          <div className="rounded-xl p-3 mb-3" style={{ background: "#0e1117" }}>
+            <p className="text-xs text-right mb-1" style={{ color: "#6b7280" }}>{calcExpression || " "}</p>
             <p className="text-white text-2xl text-right font-light">{calcDisplay}</p>
           </div>
-          <div className="grid grid-cols-4 gap-1.5">
-            {[
-              ["AC", () => calcClear(), "bg-red-100 text-red-600"],
-              ["⌫", () => calcBack(), "bg-orange-100 text-orange-600"],
-              ["%", () => { const n = parseFloat(calcDisplay)/100; setCalcDisplay(String(n)); setCalcExpression(String(n)); }, "bg-gray-100 text-gray-600"],
-              ["÷", () => calcOperator("/"), "bg-orange-400 text-white"],
-              ["7", () => calcNumber("7"), "bg-gray-50 text-gray-800"],
-              ["8", () => calcNumber("8"), "bg-gray-50 text-gray-800"],
-              ["9", () => calcNumber("9"), "bg-gray-50 text-gray-800"],
-              ["×", () => calcOperator("*"), "bg-orange-400 text-white"],
-              ["4", () => calcNumber("4"), "bg-gray-50 text-gray-800"],
-              ["5", () => calcNumber("5"), "bg-gray-50 text-gray-800"],
-              ["6", () => calcNumber("6"), "bg-gray-50 text-gray-800"],
-              ["−", () => calcOperator("-"), "bg-orange-400 text-white"],
-              ["1", () => calcNumber("1"), "bg-gray-50 text-gray-800"],
-              ["2", () => calcNumber("2"), "bg-gray-50 text-gray-800"],
-              ["3", () => calcNumber("3"), "bg-gray-50 text-gray-800"],
-              ["+", () => calcOperator("+"), "bg-orange-400 text-white"],
-              ["0", () => calcNumber("0"), "bg-gray-50 text-gray-800 col-span-2"],
-              [".", () => { if (!calcDisplay.includes(".")) { setCalcDisplay(calcDisplay+"."); setCalcExpression(calcExpression+"."); }}, "bg-gray-50 text-gray-800"],
-              ["=", () => calcEquals(), "bg-green-500 text-white"],
-            ].map(([label, onClick, style]) => (
-              <button
-                key={String(label)}
-                onClick={onClick as () => void}
-                className={`${style} h-10 rounded-xl text-sm font-semibold active:scale-95 transition-all`}
-              >
-                {String(label)}
+          <div className="grid grid-cols-4 gap-2">
+            {["C", "±", "%", "÷", "7", "8", "9", "×", "4", "5", "6", "-", "1", "2", "3", "+", "0", ".", "⌫", "="].map((btn) => (
+              <button key={btn} onClick={() => {
+                if (btn === "C") calcClear();
+                else if (btn === "⌫") calcBack();
+                else if (btn === "=") calcEquals();
+                else if (["÷", "×", "-", "+", "%"].includes(btn)) calcOperator(btn === "÷" ? "/" : btn === "×" ? "*" : btn);
+                else calcNumber(btn);
+              }}
+                className={`py-3 rounded-xl text-sm font-bold ${btn === "=" ? "col-span-1" : ""}`}
+                style={{
+                  background: btn === "=" ? colors.tab : ["C", "±", "%", "÷", "×", "-", "+"].includes(btn) ? "#374151" : "#1e2533",
+                  color: "#fff",
+                  gridColumn: btn === "0" ? "span 1" : undefined,
+                }}>
+                {btn}
               </button>
             ))}
           </div>
         </div>
       )}
     </div>
-    );
- } 
+  );
+}
