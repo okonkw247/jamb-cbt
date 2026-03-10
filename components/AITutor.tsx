@@ -16,7 +16,7 @@ export default function AITutor({ subject, topic }: Props) {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, loading]);
 
   const send = async () => {
     if (!input.trim() || loading) return;
