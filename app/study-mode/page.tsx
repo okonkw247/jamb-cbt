@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import TopicDiagram from "@/components/TopicDiagram";
 
 const SUBJECTS: Record<string, { icon: string; color: string; topics: string[] }> = {
   "Use of English": { icon: "📖", color: "from-blue-600 to-blue-800", topics: ["Comprehension", "Summary Writing", "Lexis and Structure", "Oral English", "Figures of Speech", "Synonyms and Antonyms", "Sentence Structure", "Punctuation"] },
@@ -267,6 +268,9 @@ export default function StudyMode() {
                 <div className="bg-white bg-opacity-5 rounded-2xl p-4 mb-3 border border-white border-opacity-5">
                   <p className="text-blue-400 font-bold text-sm mb-1">🖼️ Diagrams & Visuals</p>
                   <p className="text-gray-400 text-xs">Understand the visuals — JAMB includes diagram questions!</p>
+                </div>
+                  <div className="mb-4">
+                  <TopicDiagram subject={selectedSubject} topic={selectedTopic} />
                 </div>
                 {notes.diagrams?.map((diagram, i) => (
                   <div key={i} className="bg-blue-500 bg-opacity-5 rounded-2xl p-4 mb-3 border border-blue-500 border-opacity-20">
