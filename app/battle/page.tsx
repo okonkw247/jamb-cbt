@@ -588,7 +588,7 @@ const removePlayer = async (pid: string) => {
    // LOBBY
   if (screen === "lobby") return (
     <div className="min-h-screen bg-gray-100 font-sans max-w-md mx-auto">
-      <div className={`bg-gradient-to-br ${mode === "tournament" ? "bg-[#0e1117]" : "bg-[#0e1117]"} p-6 rounded-b-3xl mb-6`}>
+      <div className={`bg-gradient-to-br ${mode === "tournament" ? "bg-gray-900" : "bg-gray-900"} p-6 rounded-b-3xl mb-6`}>
         <a href="/" className="text-white text-sm block mb-2">← Home</a>
         <h1 className="text-white text-2xl font-bold">
           {mode === "tournament" ? "🏆 Tournament" : "⚔️ Quiz Battle"}
@@ -599,12 +599,12 @@ const removePlayer = async (pid: string) => {
       </div>
       <div className="px-4">
         {/* Mode selector */}
-        <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
+        <div className="rounded-2xl p-4 mb-4 shadow-sm">
           <p className="text-gray-700 font-semibold mb-2">Game Mode</p>
           <div className="flex gap-2">
             <button
               onClick={() => setMode("casual")}
-              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${mode === "casual" ? "bg-[#16a34a] text-white" : "bg-gray-100 text-gray-400"}`}
+              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${mode === "casual" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-400"}`}
             >
               ⚔️ Casual Battle
             </button>
@@ -622,43 +622,43 @@ const removePlayer = async (pid: string) => {
           )}
         </div>
 
-        <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
+        <div className="rounded-2xl p-4 mb-4 shadow-sm">
           <p className="text-gray-700 font-semibold mb-2">Your Name</p>
           <input
             type="text"
             placeholder="Enter your name"
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
-            className="w-full border border-[#1e2533] rounded-xl bg-[#1e2533] text-white px-4 py-3 outline-none text-white"
+            className="w-full border border-gray-700 rounded-xl bg-gray-700 text-white px-4 py-3 outline-none text-white"
           />
         </div>
 
-        <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
+        <div className="rounded-2xl p-4 mb-4 shadow-sm">
           <p className="text-gray-700 font-semibold mb-2">Select Subject</p>
           <select
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            className="w-full border border-[#1e2533] rounded-xl bg-[#1e2533] text-white px-4 py-3 outline-none text-gray-700 mb-3"
+            className="w-full border border-gray-700 rounded-xl bg-gray-700 text-white px-4 py-3 outline-none text-gray-700 mb-3"
           >
             {subjects.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           <button
             onClick={createRoom}
             disabled={loading}
-            className={`w-full py-4 rounded-2xl font-bold text-lg disabled:opacity-50 text-white ${mode === "tournament" ? "bg-yellow-500" : "bg-[#16a34a]"}`}
+            className={`w-full py-4 rounded-2xl font-bold text-lg disabled:opacity-50 text-white ${mode === "tournament" ? "bg-yellow-500" : "bg-green-600"}`}
           >
             {loading ? "Creating..." : mode === "tournament" ? "🏆 Create Tournament" : "⚔️ Create Battle Room"}
           </button>
         </div>
 
-        <div className="bg-[#13171f] rounded-2xl p-4 border border-[#1e2533]">
+        <div className="bg-gray-800 rounded-2xl p-4 border border-gray-700">
           <p className="text-gray-700 font-semibold mb-2">Join a Room</p>
           <input
             type="text"
             placeholder="Enter room code"
             value={inputCode}
             onChange={(e) => setInputCode(e.target.value.toUpperCase())}
-            className="w-full border border-[#1e2533] rounded-xl bg-[#1e2533] text-white px-4 py-3 outline-none text-gray-700 mb-3 text-center text-2xl font-bold tracking-widest"
+            className="w-full border border-gray-700 rounded-xl bg-gray-700 text-white px-4 py-3 outline-none text-gray-700 mb-3 text-center text-2xl font-bold tracking-widest"
             maxLength={5}
           />
           <button
@@ -675,12 +675,12 @@ const removePlayer = async (pid: string) => {
 
   // WAITING
   if (screen === "waiting") return (
-    <div className={`min-h-screen bg-gradient-to-br ${room?.mode === "tournament" ? "bg-[#0e1117]" : "bg-[#0e1117]"} font-sans max-w-md mx-auto flex flex-col items-center justify-center px-6`}>
+    <div className={`min-h-screen bg-gradient-to-br ${room?.mode === "tournament" ? "bg-gray-900" : "bg-gray-900"} font-sans max-w-md mx-auto flex flex-col items-center justify-center px-6`}>
       <h2 className="text-white text-2xl font-bold mb-2">
         {room?.mode === "tournament" ? "🏆 Tournament Lobby" : "⚔️ Battle Lobby"}
       </h2>
       <p className="text-white text-opacity-80 mb-6">Share this code with friends</p>
-      <div className="bg-white rounded-3xl px-10 py-6 mb-8 text-center">
+      <div className="rounded-3xl px-10 py-6 mb-8 text-center">
         <p className="text-gray-400 text-sm mb-1">Room Code</p>
         <p className="text-white text-5xl font-bold tracking-widest">{roomCode}</p>
       </div>
@@ -763,7 +763,7 @@ const removePlayer = async (pid: string) => {
 
     return (
       <div className="min-h-screen bg-gray-100 font-sans max-w-md mx-auto pb-10">
-        <div className="bg-gradient-to-br bg-[#0e1117] p-4 rounded-b-3xl mb-4">
+        <div className="bg-gradient-to-br bg-gray-900 p-4 rounded-b-3xl mb-4">
           <h1 className="text-white text-xl font-bold">{getRoundLabel()}</h1>
           <p className="text-yellow-100 text-sm">{room.subject} Tournament</p>
         </div>
@@ -771,7 +771,7 @@ const removePlayer = async (pid: string) => {
           {allMatches.map((match, i) => {
             const isMyMatch = match.players?.includes(playerId);
             return (
-              <div key={i} className={`bg-white rounded-2xl p-4 mb-3 shadow-sm border-l-4 ${isMyMatch ? "border-yellow-400" : "border-transparent"}`}>
+              <div key={i} className={`rounded-2xl p-4 mb-3 shadow-sm border-l-4 ${isMyMatch ? "border-yellow-400" : "border-transparent"}`}>
                 <div className="flex justify-between items-center mb-2">
                   <p className="text-xs font-bold text-gray-500 uppercase">{match.label}</p>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
@@ -787,7 +787,7 @@ const removePlayer = async (pid: string) => {
                     <p className={`font-medium ${match.winner === pid ? "text-yellow-600" : "text-white"}`}>
                       {match.winner === pid ? "🥇 " : ""}{getPlayerName(pid)}{pid === playerId ? " (You)" : ""}
                     </p>
-                    <p className="font-bold text-gray-800">{match.scores?.[pid] || 0} pts</p>
+                    <p className="font-bold text-white">{match.scores?.[pid] || 0} pts</p>
                   </div>
                 ))}
                 {isMyMatch && match.status === "waiting" && match.players[0] === playerId && (
@@ -826,7 +826,7 @@ const removePlayer = async (pid: string) => {
 
         <div className="fixed top-32 left-4 z-40 flex flex-col gap-2">
           {visibleReactions.map((r) => (
-            <div key={r.id} className="bg-white rounded-xl px-3 py-1.5 shadow-md flex items-center gap-2 animate-bounce">
+            <div key={r.id} className="rounded-xl px-3 py-1.5 shadow-md flex items-center gap-2 animate-bounce">
               <span className="text-xl">{r.emoji}</span>
               <span className="text-gray-600 text-xs">{r.name}</span>
             </div>
@@ -900,25 +900,25 @@ const removePlayer = async (pid: string) => {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
+          <div className="rounded-2xl p-4 mb-4 shadow-sm">
             <p className="text-white leading-relaxed" dangerouslySetInnerHTML={{ __html: q.question }} />
           </div>
 
           <div className="flex flex-col gap-3 mb-4">
             {options.map((opt) => {
               if (hiddenOptions.includes(opt)) return null;
-              let style = "bg-[#13171f] border-2 border-[#1e2533]";
+              let style = "bg-gray-800 border-2 border-[#1e2533]";
               if (selected) {
-                if (opt === q.answer) style = "bg-green-100 border-2 border-green-500";
-                else if (opt === selected) style = "bg-red-100 border-2 border-red-500";
-                else style = "bg-[#0e1117] border-2 border-[#1e2533] opacity-40";
+                if (opt === q.answer) style = "bg-green-900 border-2 border-green-500";
+                else if (opt === selected) style = "bg-red-900 border-2 border-red-500";
+                else style = "bg-gray-900 border-2 border-[#1e2533] opacity-40";
               }
               return (
                 <div key={opt} onClick={() => handleAnswer(opt)} className={`${style} rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all shadow-sm`}>
-                  <div className="w-8 h-8 rounded-full bg-[#1e3a5f] text-[#60a5fa] flex items-center justify-center font-bold text-sm flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-blue-900 text-blue-300 flex items-center justify-center font-bold text-sm flex-shrink-0">
                     {opt.toUpperCase()}
                   </div>
-                  <p className="text-gray-800" dangerouslySetInnerHTML={{ __html: q.option[opt] }} />
+                  <p className="text-white" dangerouslySetInnerHTML={{ __html: q.option[opt] }} />
                 </div>
               );
             })}
@@ -926,14 +926,14 @@ const removePlayer = async (pid: string) => {
 
           {selected && (
             <div className="mb-4">
-              <div className={`rounded-2xl p-3 mb-3 text-center ${selected === room.questions[currentIndex].answer ? "bg-green-100" : "bg-red-100"}`}>
-                <p className={`font-bold ${selected === room.questions[currentIndex].answer ? "text-green-700" : "text-red-700"}`}>
+              <div className={`rounded-2xl p-3 mb-3 text-center ${selected === room.questions[currentIndex].answer ? "bg-green-900" : "bg-red-900"}`}>
+                <p className={`font-bold ${selected === room.questions[currentIndex].answer ? "text-green-300" : "text-red-300"}`}>
                   {selected === room.questions[currentIndex].answer
                     ? `✓ Correct! +${1 + Math.floor(timeLeft / 3)} pts`
                     : "✗ Wrong!"}
                 </p>
               </div>
-              <button onClick={handleNextQuestion} className={`w-full ${room.mode === "tournament" ? "bg-orange-500" : "bg-[#16a34a]"} text-white py-4 rounded-2xl font-bold text-lg`}>
+              <button onClick={handleNextQuestion} className={`w-full ${room.mode === "tournament" ? "bg-orange-500" : "bg-green-600"} text-white py-4 rounded-2xl font-bold text-lg`}>
                 Next →
               </button>
             </div>
@@ -972,7 +972,7 @@ const removePlayer = async (pid: string) => {
             
           {/* Calculator Popup */}
           {showCalc && (
-            <div className="fixed bottom-36 right-4 bg-white rounded-2xl shadow-2xl p-4 z-50 w-72">
+            <div className="fixed bottom-36 right-4 rounded-2xl shadow-2xl p-4 z-50 w-72">
               <div className="flex justify-between items-center mb-3">
                 <p className="font-bold text-white">Calculator</p>
                 <button onClick={() => setShowCalc(false)} className="text-gray-400 text-xl">✕</button>
@@ -987,20 +987,20 @@ const removePlayer = async (pid: string) => {
                   ["⌫", () => calcBack(), "bg-orange-100 text-orange-600"],
                   ["%", () => { const n = parseFloat(calcDisplay)/100; setCalcDisplay(String(n)); setCalcExpression(String(n)); }, "bg-gray-100 text-gray-400"],
                   ["÷", () => calcOperator("/"), "bg-orange-400 text-white"],
-                  ["7", () => calcNumber("7"), "bg-gray-50 text-gray-800"],
-                  ["8", () => calcNumber("8"), "bg-gray-50 text-gray-800"],
-                  ["9", () => calcNumber("9"), "bg-gray-50 text-gray-800"],
+                  ["7", () => calcNumber("7"), "bg-gray-50 text-white"],
+                  ["8", () => calcNumber("8"), "bg-gray-50 text-white"],
+                  ["9", () => calcNumber("9"), "bg-gray-50 text-white"],
                   ["×", () => calcOperator("*"), "bg-orange-400 text-white"],
-                  ["4", () => calcNumber("4"), "bg-gray-50 text-gray-800"],
-                  ["5", () => calcNumber("5"), "bg-gray-50 text-gray-800"],
-                  ["6", () => calcNumber("6"), "bg-gray-50 text-gray-800"],
+                  ["4", () => calcNumber("4"), "bg-gray-50 text-white"],
+                  ["5", () => calcNumber("5"), "bg-gray-50 text-white"],
+                  ["6", () => calcNumber("6"), "bg-gray-50 text-white"],
                   ["−", () => calcOperator("-"), "bg-orange-400 text-white"],
-                  ["1", () => calcNumber("1"), "bg-gray-50 text-gray-800"],
-                  ["2", () => calcNumber("2"), "bg-gray-50 text-gray-800"],
-                  ["3", () => calcNumber("3"), "bg-gray-50 text-gray-800"],
+                  ["1", () => calcNumber("1"), "bg-gray-50 text-white"],
+                  ["2", () => calcNumber("2"), "bg-gray-50 text-white"],
+                  ["3", () => calcNumber("3"), "bg-gray-50 text-white"],
                   ["+", () => calcOperator("+"), "bg-orange-400 text-white"],
-                  ["0", () => calcNumber("0"), "bg-gray-50 text-gray-800 col-span-2"],
-                  [".", () => { if (!calcDisplay.includes(".")) { setCalcDisplay(calcDisplay+"."); setCalcExpression(calcExpression+"."); }}, "bg-gray-50 text-gray-800"],
+                  ["0", () => calcNumber("0"), "bg-gray-50 text-white col-span-2"],
+                  [".", () => { if (!calcDisplay.includes(".")) { setCalcDisplay(calcDisplay+"."); setCalcExpression(calcExpression+"."); }}, "bg-gray-50 text-white"],
                   ["=", () => calcEquals(), "bg-green-500 text-white"],
                 ].map(([label, onClick, style]) => (
                   <button
@@ -1017,7 +1017,7 @@ const removePlayer = async (pid: string) => {
 
           {/* Chat Popup */}
           {showChat && (
-            <div className="fixed bottom-48 right-4 bg-white rounded-2xl shadow-2xl z-50 w-72 flex flex-col" style={{height: "300px"}}>
+            <div className="fixed bottom-48 right-4 rounded-2xl shadow-2xl z-50 w-72 flex flex-col" style={{height: "300px"}}>
               <div className="flex justify-between items-center p-3 border-b">
                 <p className="font-bold text-white">💬 Team Chat</p>
                 <button onClick={() => setShowChat(false)} className="text-gray-400 text-xl">✕</button>
@@ -1029,7 +1029,7 @@ const removePlayer = async (pid: string) => {
                 {messages.map((msg, i) => (
                   <div key={i} className={`flex flex-col ${msg.name === playerName ? "items-end" : "items-start"}`}>
                     <p className="text-gray-400 text-xs mb-0.5">{msg.name}</p>
-                    <div className={`px-3 py-2 rounded-xl text-sm max-w-48 ${msg.name === playerName ? "bg-purple-500 text-white" : "bg-gray-100 text-gray-800"}`}>
+                    <div className={`px-3 py-2 rounded-xl text-sm max-w-48 ${msg.name === playerName ? "bg-purple-500 text-white" : "bg-gray-100 text-white"}`}>
                       {msg.text}
                     </div>
                   </div>
@@ -1042,7 +1042,7 @@ const removePlayer = async (pid: string) => {
                   onChange={(e) => setChatMessage(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendChat()}
                   placeholder="Type a message..."
-                  className="flex-1 border border-[#1e2533] rounded-xl bg-[#1e2533] text-white px-3 py-2 text-sm outline-none"
+                  className="flex-1 border border-gray-700 rounded-xl bg-gray-700 text-white px-3 py-2 text-sm outline-none"
                 />
                 <button onClick={sendChat} className="bg-purple-500 text-white px-3 py-2 rounded-xl text-sm font-bold">
                   Send
@@ -1062,13 +1062,13 @@ const removePlayer = async (pid: string) => {
     const players = getPlayers();
 
     return (
-      <div className={`min-h-screen bg-gradient-to-br ${room?.mode === "tournament" ? "bg-[#0e1117]" : "bg-[#0e1117]"} font-sans max-w-md mx-auto flex flex-col items-center justify-center px-6`}>
+      <div className={`min-h-screen bg-gradient-to-br ${room?.mode === "tournament" ? "bg-gray-900" : "bg-gray-900"} font-sans max-w-md mx-auto flex flex-col items-center justify-center px-6`}>
         {room?.mode === "tournament" ? (
           <>
             <div className="text-8xl mb-4">🏆</div>
             <h1 className="text-white text-3xl font-bold mb-2">Tournament Over!</h1>
             <p className="text-yellow-100 mb-6">We have a champion!</p>
-            <div className="bg-[#13171f] rounded-3xl p-8 border border-[#1e2533] w-full text-center mb-6">
+            <div className="bg-gray-800 rounded-3xl p-8 border border-gray-700 w-full text-center mb-6">
               <p className="text-gray-400 text-sm mb-2">👑 Tournament Champion</p>
               <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-3">
                 {champion?.name[0].toUpperCase()}
