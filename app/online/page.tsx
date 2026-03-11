@@ -1,4 +1,5 @@
 "use client";
+import { useRef } from "react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
@@ -32,6 +33,8 @@ export default function OnlineLobby() {
   const [selectedPlayer, setSelectedPlayer] = useState<OnlinePlayer | null>(null);
   const [selectedSubject, setSelectedSubject] = useState("Use of English");
   const [creating, setCreating] = useState(false);
+  const [showAnim, setShowAnim] = useState(false);
+  const [animData, setAnimData] = useState<any>(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
