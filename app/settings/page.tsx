@@ -45,6 +45,7 @@ export default function Settings() {
 
   // Profile
   const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState("🎓");
   const [bio, setBio] = useState("");
   const [school, setSchool] = useState("");
@@ -112,8 +113,10 @@ export default function Settings() {
     setSaving(true);
     try {
       await updateProfile(user, { displayName });
+      await update(ref(db, `users/${user.uid}`), { username, name: displayName, online: true });
       await update(ref(db, `users/${user.uid}/profile`), {
         avatar: selectedAvatar,
+        username,
         bio,
         school,
         targetScore,
@@ -275,6 +278,22 @@ export default function Settings() {
                 placeholder="Your name"
                 className="w-full bg-gray-800 text-white rounded-xl px-4 py-3 outline-none border border-gray-700 focus:border-green-500 transition-colors text-sm"
               />
+            </div>
+
+            {/* Username */}
+            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+              <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Username</p>
+              <p className="text-gray-500 text-xs mb-3">Friends will search you by this. No spaces. e.g. adams2025</p>
+              <div className="flex items-center gap-2 bg-gray-800 rounded-xl px-4 py-3 border border-gray-700">
+                <span className="text-gray-500 font-bold">@</span>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                  placeholder="yourname2025"
+                  className="flex-1 bg-transparent text-white outline-none text-sm"
+                />
+              </div>
             </div>
 
             {/* Bio */}
