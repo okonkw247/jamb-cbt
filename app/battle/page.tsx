@@ -42,6 +42,481 @@ interface Room {
 const EMOJIS = ["🔥", "😂", "👏", "😱", "💪", "🎯"];
 const REACTION_DURATION = 2000;
 
+// ─── Lobby Screen Component ──────────────────────────────────────
+function LobbyScreen({ mode, setMode, playerName, setPlayerName, subject, setSubject, subjects, createRoom, joinRoom, inputCode, setInputCode, loading }: any) {
+  const [lobbyTab, setLobbyTab] = useState<"battle"|"online"|"friends">("battle");
+  const [onlinePlayers, setOnlinePlayers] = useState<any[]>([]);
+  const [friends, setFriends] = useState<any[]>([]);
+  const [searchUser, setSearchUser] = useState("");
+  const [searchResult, setSearchResult] = useState<any>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentProfile, setCurrentProfile] = useState<any>(null);
+  const [inviteSent, setInviteSent] = useState<string|null>(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteTarget, setInviteTarget] = useState<any>(null);
+  const [inviteSubject, setInviteSubject] = useState("Use of English");
+  const [creating, setCreating] = useState(false);
+  const [myInvite, setMyInvite] = useState<any>(null);
+  const [showAnim, setShowAnim] = useState(false);
+  const [animData, setAnimData] = useState<any>(null);
+  const router = useRouter ? useRouter() : null;
+
+  useEffect(() => {
+    const { auth: fbAuth, db: fbDb } = require("@/lib/firebase");
+    const { onAuthStateChanged } = require("firebase/auth");
+    const { ref, onValue, update, get, set, remove } = require("firebase/database");
+
+    const unsub = onAuthStateChanged(fbAuth, async (u: any) => {
+      if (!u) return;
+      setCurrentUser(u);
+      await update(ref(fbDb, `users/${u.uid}`), { online: true, lastSeen: Date.now() });
+      const psnap = await get(ref(fbDb, `users/${u.uid}/profile`));
+      if (psnap.val()) setCurrentProfile(psnap.val());
+
+      // Online players
+      onValue(ref(fbDb, "users"), (snap: any) => {
+        const data = snap.val() || {};
+        const now = Date.now();
+        const list = Object.entries(data)
+          .filter(([uid, val]: any) => uid !== u.uid && val.online === true && now - (val.lastSeen||0) < 5*60*1000)
+          .map(([uid, val]: any) => ({
+            uid, name: val.name || val.profile?.name || "Student",
+            avatar: val.profile?.avatar || "🎓", username: val.username || "",
+          }));
+        setOnlinePlayers(list);
+      });
+
+      // Friends
+      onValue(ref(fbDb, `friends/${u.uid}`), async (snap: any) => {
+        const data = snap.val() || {};
+        const list = await Promise.all(Object.entries(data).map(async ([fuid, fdata]: any) => {
+          const fsnap = await get(ref(fbDb, `users/${fuid}`));
+          const finfo = fsnap.val() || {};
+          return { uid: fuid, name: fdata.name, avatar: fdata.avatar || "🎓",
+            online: finfo.online === true && Date.now() - (finfo.lastSeen||0) < 5*60*1000 };
+        }));
+        setFriends(list.sort((a,b) => (b.online?1:0)-(a.online?1:0)));
+      });
+
+      // Incoming invites
+      onValue(ref(fbDb, `battleInvites/${u.uid}`), (snap: any) => {
+        if (snap.val()) setMyInvite(snap.val());
+        else setMyInvite(null);
+      });
+
+      // Global entrance animation
+      onValue(ref(fbDb, "battleEntrances"), (snap: any) => {
+        const data = snap.val();
+        if (!data) return;
+        if (Date.now() - (data.timestamp||0) < 3000) {
+          setAnimData({ challenger: data, isSpectator: true });
+          setShowAnim(true);
+          setTimeout(() => setShowAnim(false), 3000);
+        }
+      });
+    });
+    return () => unsub();
+  }, []);
+
+  const sendChallenge = async () => {
+    if (!currentUser || !inviteTarget || !currentProfile) return;
+    setCreating(true);
+    try {
+      const { db: fbDb } = require("@/lib/firebase");
+      const { ref, set, update } = require("firebase/database");
+      const code = Math.random().toString(36).substring(2,7).toUpperCase();
+      const pid = Math.random().toString(36).substring(2,7).toUpperCase();
+      let questions: any[] = [];
+      try {
+        const res = await fetch(`/api/questions?subject=${encodeURIComponent(inviteSubject)}`);
+        const data = await res.json();
+        if (data.data?.length > 0) questions = data.data.slice(0, 30);
+      } catch {}
+      await set(ref(fbDb, `battles/${code}`), {
+        host: pid, subject: inviteSubject, mode: "casual", status: "waiting",
+        questions, reactions: {}, maxPlayers: 4, tournament: null,
+        players: { [pid]: { name: currentProfile.name || "Student", score:0, answered:0, streak:0, ready:true, wins:0 } }
+      });
+      await set(ref(fbDb, `battleInvites/${inviteTarget.uid}`), {
+        roomCode: code, hostPlayerId: pid,
+        fromName: currentProfile.name || "Student",
+        fromAvatar: currentProfile.avatar || "🎓",
+        fromUid: currentUser.uid, subject: inviteSubject, timestamp: Date.now(),
+      });
+      // Show animation to host
+      setAnimData({
+        challenger: { challengerName: currentProfile.name || "Student", challengerAvatar: currentProfile.avatar || "🎓",
+          acceptorName: inviteTarget.name, acceptorAvatar: inviteTarget.avatar,
+          subject: inviteSubject, roomCode: code },
+        pid, isSpectator: false, isHost: true,
+      });
+      setShowAnim(true);
+      setShowInviteModal(false);
+      setInviteSent(inviteTarget.uid);
+      setTimeout(() => {
+        setShowAnim(false);
+        window.location.href = `/battle?room=${code}&pid=${pid}&name=${encodeURIComponent(currentProfile.name || "Student")}`;
+      }, 2800);
+    } catch { alert("Failed. Try again!"); }
+    setCreating(false);
+  };
+
+  const acceptBattleInvite = async () => {
+    if (!myInvite || !currentUser || !currentProfile) return;
+    const { db: fbDb } = require("@/lib/firebase");
+    const { ref, remove, update, set } = require("firebase/database");
+    await remove(ref(fbDb, `battleInvites/${currentUser.uid}`));
+    const pid = Math.random().toString(36).substring(2,7).toUpperCase();
+    await update(ref(fbDb, `battles/${myInvite.roomCode}/players/${pid}`), {
+      name: currentProfile.name || "Student", score:0, answered:0, streak:0, ready:true, wins:0
+    });
+    // Broadcast entrance to ALL
+    await set(ref(fbDb, "battleEntrances"), {
+      challengerName: myInvite.fromName, challengerAvatar: myInvite.fromAvatar,
+      acceptorName: currentProfile.name || "Student", acceptorAvatar: currentProfile.avatar || "🎓",
+      subject: myInvite.subject, roomCode: myInvite.roomCode, timestamp: Date.now(),
+    });
+    setAnimData({ challenger: {
+      challengerName: myInvite.fromName, challengerAvatar: myInvite.fromAvatar,
+      acceptorName: currentProfile.name || "Student", acceptorAvatar: currentProfile.avatar || "🎓",
+      subject: myInvite.subject, roomCode: myInvite.roomCode,
+    }, pid, isSpectator: false, isHost: false });
+    setMyInvite(null);
+    setShowAnim(true);
+    setTimeout(() => {
+      setShowAnim(false);
+      window.location.href = `/battle?room=${myInvite.roomCode}&pid=${pid}&name=${encodeURIComponent(currentProfile.name || "Student")}`;
+    }, 2800);
+  };
+
+  const doSearchUser = async () => {
+    if (!searchUser.trim()) return;
+    setSearchLoading(true); setSearchResult(null);
+    try {
+      const { db: fbDb } = require("@/lib/firebase");
+      const { ref, get } = require("firebase/database");
+      const snap = await get(ref(fbDb, "users"));
+      const all = snap.val() || {};
+      const found = Object.entries(all).find(([uid, d]: any) =>
+        d.username?.toLowerCase() === searchUser.trim().toLowerCase() && uid !== currentUser?.uid
+      );
+      if (found) { const [uid, d]: any = found; setSearchResult({ uid, ...d }); }
+      else setSearchResult({ notFound: true });
+    } catch {}
+    setSearchLoading(false);
+  };
+
+  const sendFriendRequest = async (toUid: string, toData: any) => {
+    if (!currentUser || !currentProfile) return;
+    const { db: fbDb } = require("@/lib/firebase");
+    const { ref, set } = require("firebase/database");
+    await set(ref(fbDb, `friendRequests/${toUid}/${currentUser.uid}`), {
+      name: currentProfile.name || "Student", avatar: currentProfile.avatar || "🎓",
+      username: currentProfile.username || "", timestamp: Date.now(),
+    });
+    alert("Friend request sent! 🎮");
+    setSearchResult(null); setSearchUser("");
+  };
+
+  const C = "#0e1117"; const CARD = "#13171f"; const BORDER = "#1e2533";
+
+  return (
+    <div className="min-h-screen font-sans max-w-md mx-auto pb-10" style={{ background: C }}>
+
+      {/* FREE FIRE ENTRANCE ANIMATION */}
+      {showAnim && animData && (
+        <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center" style={{ background: "#000" }}>
+          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,100,0.1) 2px,rgba(0,255,100,0.1) 4px)" }} />
+          <div className="absolute top-0 left-0 right-0 py-3 text-center" style={{ background: "linear-gradient(90deg,transparent,#14532d,transparent)" }}>
+            <p className="text-green-400 text-xs font-black uppercase tracking-widest animate-pulse">⚔️ BATTLE STARTING ⚔️</p>
+          </div>
+          <div className="absolute w-40 h-40 rounded-full border-4 border-green-400 animate-ping" style={{ opacity:0.4 }} />
+          <div className="absolute w-72 h-72 rounded-full border-2 border-green-500 animate-ping" style={{ opacity:0.2, animationDelay:"0.2s" }} />
+          <div className="absolute w-96 h-96 rounded-full border border-green-600 animate-ping" style={{ opacity:0.1, animationDelay:"0.4s" }} />
+          <div className="flex items-center gap-6 mb-8 relative z-10">
+            <div className="flex flex-col items-center">
+              <div className="w-24 h-24 rounded-2xl flex items-center justify-center text-5xl mb-2" style={{ background:"#1e3a1e", border:"3px solid #4ade80", boxShadow:"0 0 30px #4ade8088" }}>
+                {animData.challenger.challengerAvatar}
+              </div>
+              <p className="text-white font-black text-sm">{animData.challenger.challengerName}</p>
+              <p className="text-xs" style={{ color:"#4ade80" }}>Challenger</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <p className="font-black text-5xl animate-pulse" style={{ color:"#fbbf24", textShadow:"0 0 30px #fbbf24" }}>VS</p>
+              <p className="text-xs mt-1" style={{ color:"#6b7280" }}>{animData.challenger.subject}</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-24 h-24 rounded-2xl flex items-center justify-center text-5xl mb-2" style={{ background:"#1a1a2e", border:"3px solid #60a5fa", boxShadow:"0 0 30px #60a5fa88" }}>
+                {animData.challenger.acceptorAvatar}
+              </div>
+              <p className="text-white font-black text-sm">{animData.challenger.acceptorName}</p>
+              <p className="text-xs" style={{ color:"#60a5fa" }}>{animData.isSpectator ? "Accepted" : animData.isHost ? "You" : "You"}</p>
+            </div>
+          </div>
+          <div className="px-8 py-3 rounded-2xl" style={{ background:"#14532d", border:"1px solid #4ade80" }}>
+            <p className="text-white font-black text-xl">
+              {animData.isSpectator ? "🔥 Battle Started in Lobby!" : "Entering Room..."}
+            </p>
+          </div>
+          {!animData.isSpectator && <p className="text-xs mt-3" style={{ color:"#374151" }}>Room: {animData.challenger.roomCode}</p>}
+        </div>
+      )}
+{/* Incoming invite */}
+      {myInvite && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-8" style={{ background:"rgba(0,0,0,0.88)" }}>
+          <div className="w-full rounded-3xl overflow-hidden" style={{ background: CARD, border:"1px solid #4ade80" }}>
+            <div className="px-5 pt-5 pb-3" style={{ background:"#14532d" }}>
+              <div className="flex items-center gap-3">
+                <div className="text-4xl animate-bounce">{myInvite.fromAvatar || "🎓"}</div>
+                <div>
+                  <p className="text-white font-black text-lg">{myInvite.fromName}</p>
+                  <p className="text-green-300 text-xs font-bold">is challenging you! ⚔️</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-5 py-4">
+              <div className="flex items-center gap-3 mb-4 p-3 rounded-2xl" style={{ background: BORDER }}>
+                <span className="text-xl">📚</span>
+                <div className="flex-1"><p className="text-xs" style={{ color:"#6b7280" }}>Subject</p><p className="text-white font-bold text-sm">{myInvite.subject}</p></div>
+                <div><p className="text-xs" style={{ color:"#6b7280" }}>Room</p><p className="text-white font-bold text-sm">{myInvite.roomCode}</p></div>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => { const {db:d}=require("@/lib/firebase");const{ref,remove}=require("firebase/database");remove(ref(d,`battleInvites/${currentUser?.uid}`));setMyInvite(null); }}
+                  className="flex-1 py-4 rounded-2xl font-bold text-sm" style={{ background:"#450a0a", color:"#f87171" }}>✗ Decline</button>
+                <button onClick={acceptBattleInvite}
+                  className="flex-1 py-4 rounded-2xl font-bold text-sm" style={{ background:"#16a34a", color:"#fff" }}>⚔️ Accept!</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Challenge modal */}
+      {showInviteModal && inviteTarget && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-8" style={{ background:"rgba(0,0,0,0.88)" }}>
+          <div className="w-full rounded-3xl p-5" style={{ background: CARD, border:`1px solid ${BORDER}` }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl" style={{ background: BORDER }}>{inviteTarget.avatar}</div>
+              <div><p className="text-white font-black">Challenge {inviteTarget.name}</p><p className="text-xs font-bold" style={{ color:"#4ade80" }}>● Online</p></div>
+            </div>
+            <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color:"#6b7280" }}>Pick Subject</p>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {["Use of English","Mathematics","Physics","Chemistry","Biology","Economics","Government","Literature"].map(s => (
+                <button key={s} onClick={() => setInviteSubject(s)}
+                  className="py-2.5 px-3 rounded-xl text-xs font-bold text-left"
+                  style={{ background: inviteSubject===s?"#14532d":"#1e2533", color: inviteSubject===s?"#4ade80":"#9ca3af", border:`1px solid ${inviteSubject===s?"#4ade80":"#374151"}` }}>
+                  {s}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowInviteModal(false)} className="flex-1 py-3.5 rounded-2xl font-bold text-sm" style={{ background:"#1e2533", color:"#9ca3af" }}>Cancel</button>
+              <button onClick={sendChallenge} disabled={creating} className="flex-1 py-3.5 rounded-2xl font-bold text-sm" style={{ background:"#16a34a", color:"#fff" }}>
+                {creating ? "Creating..." : "⚔️ Challenge!"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="px-4 pt-8 pb-4" style={{ borderBottom:`1px solid ${BORDER}` }}>
+        <a href="/" className="text-xs mb-3 block" style={{ color:"#6b7280" }}>← Home</a>
+        <h1 className="text-white font-black text-2xl">⚔️ Battle Arena</h1>
+        <p className="text-xs mt-0.5" style={{ color:"#6b7280" }}>
+          {onlinePlayers.length > 0 ? `🟢 ${onlinePlayers.length} players online` : "No players online right now"}
+        </p>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex" style={{ borderBottom:`1px solid ${BORDER}` }}>
+        {[{id:"battle",label:"⚔️ Battle"},{id:"online",label:`🌍 Online (${onlinePlayers.length})`},{id:"friends",label:`👥 Friends (${friends.length})`}].map(tab => (
+          <button key={tab.id} onClick={() => setLobbyTab(tab.id as any)}
+            className="flex-1 py-3 text-xs font-bold"
+            style={{ color: lobbyTab===tab.id?"#4ade80":"#6b7280", borderBottom: lobbyTab===tab.id?"2px solid #4ade80":"2px solid transparent" }}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="px-4 pt-4">
+
+        {/* BATTLE TAB */}
+        {lobbyTab === "battle" && (
+          <div>
+            {/* Mode */}
+            <div className="rounded-2xl p-4 mb-4" style={{ background: CARD, border:`1px solid ${BORDER}` }}>
+              <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color:"#6b7280" }}>Game Mode</p>
+              <div className="flex gap-2">
+                <button onClick={() => setMode("casual")} className="flex-1 py-3 rounded-xl font-bold text-sm"
+                  style={{ background: mode==="casual"?"#14532d":"#1e2533", color: mode==="casual"?"#4ade80":"#9ca3af", border:`1px solid ${mode==="casual"?"#4ade80":"#374151"}` }}>
+                  ⚔️ Casual
+                </button>
+                <button onClick={() => setMode("tournament")} className="flex-1 py-3 rounded-xl font-bold text-sm"
+                  style={{ background: mode==="tournament"?"#92400e":"#1e2533", color: mode==="tournament"?"#fbbf24":"#9ca3af", border:`1px solid ${mode==="tournament"?"#fbbf24":"#374151"}` }}>
+                  🏆 Tournament
+                </button>
+              </div>
+              {mode === "tournament" && (
+                <p className="text-xs mt-2" style={{ color:"#fbbf24" }}>4-8 players · Elimination rounds · One champion!</p>
+              )}
+            </div>
+
+            {/* Name */}
+            <div className="rounded-2xl p-4 mb-4" style={{ background: CARD, border:`1px solid ${BORDER}` }}>
+              <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color:"#6b7280" }}>Your Name</p>
+              <input type="text" placeholder="Enter your name" value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                className="w-full rounded-xl px-4 py-3 text-sm text-white outline-none"
+                style={{ background:"#1e2533", border:`1px solid ${BORDER}` }} />
+            </div>
+
+            {/* Subject + Create */}
+            <div className="rounded-2xl p-4 mb-4" style={{ background: CARD, border:`1px solid ${BORDER}` }}>
+              <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color:"#6b7280" }}>Subject</p>
+              <select value={subject} onChange={(e) => setSubject(e.target.value)}
+                className="w-full rounded-xl px-4 py-3 text-sm text-white outline-none mb-3"
+                style={{ background:"#1e2533", border:`1px solid ${BORDER}` }}>
+                {subjects.map((s: string) => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <button onClick={createRoom} disabled={loading}
+                className="w-full py-4 rounded-2xl font-bold text-base text-white disabled:opacity-50"
+                style={{ background: mode==="tournament"?"#92400e":"#16a34a" }}>
+                {loading ? "Creating..." : mode==="tournament" ? "🏆 Create Tournament" : "⚔️ Create Battle Room"}
+              </button>
+            </div>
+
+            {/* Join */}
+            <div className="rounded-2xl p-4" style={{ background: CARD, border:`1px solid ${BORDER}` }}>
+              <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color:"#6b7280" }}>Join a Room</p>
+              <input type="text" placeholder="ENTER ROOM CODE" value={inputCode}
+                onChange={(e) => setInputCode(e.target.value.toUpperCase())}
+                maxLength={5}
+                className="w-full rounded-xl px-4 py-3 text-white outline-none mb-3 text-center text-2xl font-black tracking-widest"
+                style={{ background:"#1e2533", border:`1px solid ${BORDER}` }} />
+              <button onClick={joinRoom} disabled={loading}
+                className="w-full py-4 rounded-2xl font-bold text-base text-white disabled:opacity-50"
+                style={{ background:"#1d4ed8" }}>
+                {loading ? "Joining..." : "🚀 Join Room"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ONLINE TAB */}
+        {lobbyTab === "online" && (
+          <div>
+            {onlinePlayers.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-5xl mb-4">😴</div>
+                <p className="text-white font-bold mb-1">No one online right now</p>
+                <p className="text-sm mb-4" style={{ color:"#6b7280" }}>Share the app to get players online!</p>
+                <button onClick={() => { const msg=`🎓 Join JAMB CBT Practice! Battle me live!
+https://jamb-cbt-chi.vercel.app`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`); }}
+                  className="px-6 py-3 rounded-2xl font-bold text-white" style={{ background:"#16a34a" }}>
+                  📲 Invite on WhatsApp
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-2xl overflow-hidden" style={{ background: CARD }}>
+                {onlinePlayers.map((p, i) => (
+                  <div key={p.uid} className="flex items-center gap-3 px-4 py-3.5"
+                    style={{ borderBottom: i < onlinePlayers.length-1 ? `1px solid ${BORDER}` : "none" }}>
+                    <div className="relative flex-shrink-0">
+                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background:"#1e2533" }}>{p.avatar}</div>
+                      <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-green-400 border-2" style={{ borderColor: CARD }} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-white font-bold text-sm">{p.name}</p>
+                      <p className="text-xs" style={{ color:"#6b7280" }}>{p.username ? `@${p.username}` : "● Online"}</p>
+                    </div>
+                    <button onClick={() => { setInviteTarget(p); setShowInviteModal(true); }}
+                      disabled={inviteSent === p.uid}
+                      className="px-3 py-2 rounded-xl font-bold text-xs"
+                      style={{ background: inviteSent===p.uid?"#1e2533":"#14532d", color: inviteSent===p.uid?"#6b7280":"#4ade80", border:`1px solid ${inviteSent===p.uid?"#374151":"#4ade80"}` }}>
+                      {inviteSent===p.uid ? "Invited ✓" : "⚔️ Battle"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* FRIENDS TAB */}
+        {lobbyTab === "friends" && (
+          <div>
+            {/* Search */}
+            <div className="rounded-2xl p-4 mb-4" style={{ background: CARD, border:`1px solid ${BORDER}` }}>
+              <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color:"#6b7280" }}>Find by Username</p>
+              <div className="flex gap-2">
+                <input value={searchUser} onChange={(e) => setSearchUser(e.target.value)}
+                  onKeyDown={(e) => e.key==="Enter" && doSearchUser()}
+                  placeholder="@username"
+                  className="flex-1 rounded-xl px-4 py-2.5 text-sm text-white outline-none"
+                  style={{ background:"#1e2533", border:`1px solid ${BORDER}` }} />
+                <button onClick={doSearchUser} disabled={searchLoading}
+                  className="px-4 py-2.5 rounded-xl font-bold text-sm text-white" style={{ background:"#16a34a" }}>
+                  {searchLoading ? "..." : "Find"}
+                </button>
+              </div>
+              {searchResult && !searchResult.notFound && (
+                <div className="mt-3 flex items-center gap-3 p-3 rounded-xl" style={{ background:"#1e2533" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ background:"#13171f" }}>{searchResult.profile?.avatar||"🎓"}</div>
+                  <div className="flex-1">
+                    <p className="text-white font-bold text-sm">{searchResult.profile?.name||searchResult.username}</p>
+                    <p className="text-xs" style={{ color:"#6b7280" }}>@{searchResult.username}</p>
+                  </div>
+                  <button onClick={() => sendFriendRequest(searchResult.uid, searchResult)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-white" style={{ background:"#16a34a" }}>
+                    ➕ Add
+                  </button>
+                </div>
+              )}
+              {searchResult?.notFound && <p className="text-xs mt-2" style={{ color:"#f87171" }}>No user found!</p>}
+            </div>
+
+            {/* Friends list */}
+            {friends.length === 0 ? (
+              <div className="text-center py-10">
+                <div className="text-4xl mb-3">👥</div>
+                <p className="text-white font-bold mb-1">No friends yet</p>
+                <p className="text-xs" style={{ color:"#6b7280" }}>Search by username above to add friends</p>
+              </div>
+            ) : (
+              <div className="rounded-2xl overflow-hidden" style={{ background: CARD }}>
+                {friends.map((f, i) => (
+                  <div key={f.uid} className="flex items-center gap-3 px-4 py-3.5"
+                    style={{ borderBottom: i < friends.length-1 ? `1px solid ${BORDER}` : "none" }}>
+                    <div className="relative flex-shrink-0">
+                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background:"#1e2533" }}>{f.avatar}</div>
+                      <div className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2" style={{ background: f.online?"#4ade80":"#374151", borderColor: CARD }} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-white font-bold text-sm">{f.name}</p>
+                      <p className="text-xs" style={{ color: f.online?"#4ade80":"#6b7280" }}>{f.online?"● Online":"● Offline"}</p>
+                    </div>
+                    {f.online && (
+                      <button onClick={() => { setInviteTarget(f); setShowInviteModal(true); }}
+                        className="px-3 py-2 rounded-xl font-bold text-xs"
+                        style={{ background:"#14532d", color:"#4ade80", border:"1px solid #4ade80" }}>
+                        ⚔️ Battle
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+// ─── End LobbyScreen ─────────────────────────────────────────────
+
+
 export default function Battle() {
   const router = useRouter();
   const [screen, setScreen] = useState<"lobby" | "waiting" | "playing" | "finished" | "bracket">("lobby");
