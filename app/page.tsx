@@ -158,6 +158,18 @@ export default function Home() {
                 <p className="text-white font-bold text-sm">Battle</p>
                 <p className="text-xs mt-0.5" style={{ color: "#a5b4fc" }}>Challenge friends</p>
               </button>
+              <a href="/trivia"
+                className="rounded-2xl p-4 text-left" style={{ background: "#1a0a2e" }}>
+                <p className="text-2xl mb-2">🧠</p>
+                <p className="text-white font-bold text-sm">Trivia</p>
+                <p className="text-xs mt-0.5" style={{ color: "#c084fc" }}>Quick fire quiz</p>
+              </a>
+              <a href="/online"
+                className="rounded-2xl p-4 text-left" style={{ background: "#0f1f0f" }}>
+                <p className="text-2xl mb-2">🌍</p>
+                <p className="text-white font-bold text-sm">Online</p>
+                <p className="text-xs mt-0.5" style={{ color: "#4ade80" }}>See who is online</p>
+              </a>
             </div>
           </div>
 {/* Features */}
