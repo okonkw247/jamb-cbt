@@ -1290,7 +1290,7 @@ const removePlayer = async (pid: string) => {
       : null;
 
     return (
-      <div className="min-h-screen bg-gray-100 font-sans max-w-md mx-auto pb-10 relative">
+      <div className="min-h-screen font-sans max-w-md mx-auto pb-10 relative" style={{background:"#0e1117"}}>
         {showStreak && (
           <div className="fixed top-20 left-0 right-0 flex justify-center z-50">
             <div className="bg-yellow-400 text-gray-900 px-6 py-3 rounded-2xl font-bold text-lg shadow-xl animate-bounce">
@@ -1301,14 +1301,14 @@ const removePlayer = async (pid: string) => {
 
         <div className="fixed top-32 left-4 z-40 flex flex-col gap-2">
           {visibleReactions.map((r) => (
-            <div key={r.id} className="rounded-xl px-3 py-1.5 shadow-md flex items-center gap-2 animate-bounce">
+            <div key={r.id} className="rounded-xl px-3 py-1.5 flex items-center gap-2 animate-bounce" style={{background:"#1e2533"}}>
               <span className="text-xl">{r.emoji}</span>
-              <span className="text-gray-600 text-xs">{r.name}</span>
+              <span className="text-gray-300 text-xs">{r.name}</span>
             </div>
           ))}
         </div>
 
-        <div className={`${room.mode === "tournament" ? "bg-gradient-to-r from-yellow-500 to-orange-500" : "bg-purple-700"} p-4 sticky top-0 z-10`}>
+        <div className="p-4 sticky top-0 z-10" style={{background:"#13171f",borderBottom:"1px solid #1e2533"}}>
           <div className="flex justify-between items-center mb-2">
             <div>
               {room.mode === "tournament" && (
@@ -1318,12 +1318,12 @@ const removePlayer = async (pid: string) => {
               )}
               <p className="text-white font-bold">Q {currentIndex + 1}/{room.questions.length}</p>
             </div>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${timeLeft <= 5 ? "bg-red-500 text-white animate-pulse" : "bg-white text-purple-700"}`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${timeLeft <= 5 ? "bg-red-500 text-white animate-pulse" : "bg-[#1e2533] text-white"}`}>
               {timeLeft}
             </div>
           </div>
 
-          <div className={`w-full ${room.mode === "tournament" ? "bg-orange-700" : "bg-purple-900"} rounded-full h-2 mb-2`}>
+          <div className="w-full rounded-full h-2 mb-2" style={{background:"#1e2533"}}>
             <div
               className="bg-yellow-400 h-2 rounded-full transition-all"
               style={{ width: `${((currentIndex + 1) / room.questions.length) * 100}%` }}
@@ -1332,7 +1332,7 @@ const removePlayer = async (pid: string) => {
 
           {/* VS bar for tournament */}
           {room.mode === "tournament" && myMatch && opponent ? (
-            <div className="flex items-center gap-2 bg-white bg-opacity-20 rounded-xl p-2 mt-2">
+            <div className="flex items-center gap-2 rounded-xl p-2 mt-2" style={{background:"#1e2533"}}>
               <div className="flex-1 text-center">
                 <p className="text-white text-xs">You</p>
                 <p className="text-yellow-300 text-lg font-bold">{myMatch.scores?.[playerId] || 0}</p>
@@ -1346,10 +1346,10 @@ const removePlayer = async (pid: string) => {
           ) : (
             <div className="flex gap-2 overflow-x-auto mt-2">
               {getPlayers().map((p, i) => (
-                <div key={p.id} className={`flex-shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 ${p.id === playerId ? "bg-yellow-400" : "bg-white bg-opacity-20"}`}>
+                <div key={p.id} className={`flex-shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 ${p.id === playerId ? "bg-yellow-500" : "bg-[#1e2533]"}`}>
                   <span className="text-xs">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🏅"}</span>
                   <span className={`text-xs font-medium ${p.id === playerId ? "text-gray-900" : "text-white"}`}>{p.name.split(" ")[0]}</span>
-                  <span className={`text-xs font-bold ${p.id === playerId ? "text-gray-900" : "text-yellow-300"}`}>{p.score}</span>
+                  <span className={`text-xs font-bold ${p.id === playerId ? "text-gray-900" : "text-green-400"}`}>{p.score}</span>
                   {(p.streak || 0) >= 2 && <span className="text-xs">🔥{p.streak}</span>}
                 </div>
               ))}
@@ -1362,13 +1362,13 @@ const removePlayer = async (pid: string) => {
             <button
               onClick={useFiftyFifty}
               disabled={fiftyUsed || !!selected}
-              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${fiftyUsed ? "bg-gray-200 text-gray-400" : "bg-indigo-100 text-indigo-700"}`}
+              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${fiftyUsed ? "bg-gray-800 text-gray-600" : "bg-indigo-900 text-indigo-300"}`}
             >
               {fiftyUsed ? "✓ Used" : "⚡ 50/50"}
             </button>
             <div className="flex gap-1">
               {EMOJIS.map((emoji) => (
-                <button key={emoji} onClick={() => sendReaction(emoji)} className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm text-lg">
+                <button key={emoji} onClick={() => sendReaction(emoji)} className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{background:"#1e2533"}}>
                   {emoji}
                 </button>
               ))}
