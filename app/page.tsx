@@ -41,6 +41,7 @@ export default function Home() {
       setAuthLoading(false);
       const done = localStorage.getItem("onboardingComplete");
       if (!done) setShowOnboarding(true);
+      await import('firebase/database').then(({ update, ref: dbRef }) => update(dbRef(db, `users/${u.uid}`), { online: true, lastSeen: Date.now() }));
       const profileSnap = await get(ref(db, `users/${u.uid}/profile`));
       if (profileSnap.val()) setProfile(profileSnap.val());
       onValue(ref(db, "appUpdate"), (snapshot) => {
@@ -307,6 +308,7 @@ export default function Home() {
                 { label: "Watch Live Battle", desc: "Spectate ongoing battles", icon: "🔴", href: "/watch" },
                 { label: "Flashcards", desc: "Memorize with AI flashcards", icon: "🃏", href: "/flashcards" },
                 { label: "JAMB Novels", desc: "Set books and summaries", icon: "📚", href: "/jamb-novel" },
+                { label: "Friends", desc: "Free Fire style friends", icon: "👥", href: "/friends" },
                 { label: "Local Leaderboard", desc: "Your group ranking", icon: "🏅", href: "/leaderboard" },
                 { label: "Global Leaderboard", desc: "All of Nigeria", icon: "🌍", href: "/global-leaderboard" },
               ].map((item, i, arr) => (
@@ -347,7 +349,8 @@ export default function Home() {
                 { label: "My History", desc: "Past exam results", icon: "📊", href: "/history" },
                 { label: "Calculator", desc: "Scientific calculator", icon: "🧮", href: "/calculator" },
                 { label: "About", desc: "About this app", icon: "ℹ️", href: "/about" },
-                { label: "Privacy Policy", desc: "How we handle your data", icon: "🔒", href: "/privacy" },
+                { label: "Friends", desc: "Add friends, battle online", icon: "👥", href: "/friends" },
+              { label: "Privacy Policy", desc: "How we handle your data", icon: "🔒", href: "/privacy" },
               ].map((item, i, arr) => (
                 <a key={item.label} href={item.href}
                   className="flex items-center gap-3 px-4 py-4 active:opacity-70"
