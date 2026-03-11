@@ -38,6 +38,7 @@ export default function Home() {
       if (!u) { router.push("/login"); return; }
       setUser(u);
       setName(u.displayName || "");
+      import("firebase/database").then(async ({ update: upd, ref: dbRef }) => { const { db: fdb } = await import("@/lib/firebase"); upd(dbRef(fdb, `users/${u.uid}`), { online: true, lastSeen: Date.now() }); });
       setAuthLoading(false);
       const done = localStorage.getItem("onboardingComplete");
       if (!done) setShowOnboarding(true);
@@ -303,11 +304,13 @@ export default function Home() {
           <div className="px-5">
             <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "#13171f" }}>
               {[
+                { label: "Online Lobby", desc: "See who is online and battle them", icon: "🌍", href: "/online" },
                 { label: "Quiz Battle", desc: "Create room and challenge a friend", icon: "⚔️", href: "/battle" },
                 { label: "Tournament Mode", desc: "8 players, one champion", icon: "🏆", href: "/battle" },
                 { label: "Watch Live Battle", desc: "Spectate ongoing battles", icon: "🔴", href: "/watch" },
                 { label: "Flashcards", desc: "Memorize with AI flashcards", icon: "🃏", href: "/flashcards" },
                 { label: "JAMB Novels", desc: "Set books and summaries", icon: "📚", href: "/jamb-novel" },
+                { label: "Online Now", desc: "See who is online and battle", icon: "🌍", href: "/online" },
                 { label: "Friends", desc: "Free Fire style friends", icon: "👥", href: "/friends" },
                 { label: "Local Leaderboard", desc: "Your group ranking", icon: "🏅", href: "/leaderboard" },
                 { label: "Global Leaderboard", desc: "All of Nigeria", icon: "🌍", href: "/global-leaderboard" },
