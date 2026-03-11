@@ -260,7 +260,7 @@ const calcBack = () => {
         const res = await fetch(`/api/questions?subject=${encodeURIComponent(subject)}`);
         const data = await res.json();
         if (data.data && data.data.length > 0) {
-          questions = data.data.slice(0, 10);
+          questions = data.data.slice(0, 30);
           await saveQuestions(subject, data.data);
         }
       } catch {
@@ -269,7 +269,7 @@ const calcBack = () => {
       if (questions.length === 0) {
         const cached = await getQuestions(subject);
         if (cached && cached.length > 0) {
-          questions = cached.slice(0, 10);
+          questions = cached.slice(0, 30);
         } else {
           alert("No questions available. Please check your connection!");
           setLoading(false);
@@ -539,7 +539,7 @@ const removePlayer = async (pid: string) => {
         const res = await fetch(`/api/questions?subject=${encodeURIComponent(room.subject)}`);
         const data = await res.json();
         if (data.data && data.data.length > 0) {
-          questions = data.data.slice(0, 10);
+          questions = data.data.slice(0, 30);
           await saveQuestions(room.subject, data.data);
         }
       } catch {
@@ -548,7 +548,7 @@ const removePlayer = async (pid: string) => {
       if (questions.length === 0) {
         const cached = await getQuestions(room.subject);
         if (cached && cached.length > 0) {
-          questions = cached.slice(0, 10);
+          questions = cached.slice(0, 30);
         } else {
           alert("No questions available!");
           return;
@@ -588,7 +588,7 @@ const removePlayer = async (pid: string) => {
    // LOBBY
   if (screen === "lobby") return (
     <div className="min-h-screen bg-gray-100 font-sans max-w-md mx-auto">
-      <div className={`bg-gradient-to-br ${mode === "tournament" ? "from-yellow-500 to-orange-600" : "from-purple-700 to-indigo-700"} p-6 rounded-b-3xl mb-6`}>
+      <div className={`bg-gradient-to-br ${mode === "tournament" ? "bg-[#0e1117]" : "bg-[#0e1117]"} p-6 rounded-b-3xl mb-6`}>
         <a href="/" className="text-white text-sm block mb-2">← Home</a>
         <h1 className="text-white text-2xl font-bold">
           {mode === "tournament" ? "🏆 Tournament" : "⚔️ Quiz Battle"}
@@ -604,13 +604,13 @@ const removePlayer = async (pid: string) => {
           <div className="flex gap-2">
             <button
               onClick={() => setMode("casual")}
-              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${mode === "casual" ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-600"}`}
+              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${mode === "casual" ? "bg-[#16a34a] text-white" : "bg-gray-100 text-gray-400"}`}
             >
               ⚔️ Casual Battle
             </button>
             <button
               onClick={() => setMode("tournament")}
-              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${mode === "tournament" ? "bg-yellow-500 text-white" : "bg-gray-100 text-gray-600"}`}
+              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${mode === "tournament" ? "bg-yellow-500 text-white" : "bg-gray-100 text-gray-400"}`}
             >
               🏆 Tournament
             </button>
@@ -629,7 +629,7 @@ const removePlayer = async (pid: string) => {
             placeholder="Enter your name"
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none text-gray-700"
+            className="w-full border border-[#1e2533] rounded-xl bg-[#1e2533] text-white px-4 py-3 outline-none text-white"
           />
         </div>
 
@@ -638,27 +638,27 @@ const removePlayer = async (pid: string) => {
           <select
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none text-gray-700 mb-3"
+            className="w-full border border-[#1e2533] rounded-xl bg-[#1e2533] text-white px-4 py-3 outline-none text-gray-700 mb-3"
           >
             {subjects.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           <button
             onClick={createRoom}
             disabled={loading}
-            className={`w-full py-4 rounded-2xl font-bold text-lg disabled:opacity-50 text-white ${mode === "tournament" ? "bg-yellow-500" : "bg-purple-600"}`}
+            className={`w-full py-4 rounded-2xl font-bold text-lg disabled:opacity-50 text-white ${mode === "tournament" ? "bg-yellow-500" : "bg-[#16a34a]"}`}
           >
             {loading ? "Creating..." : mode === "tournament" ? "🏆 Create Tournament" : "⚔️ Create Battle Room"}
           </button>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
+        <div className="bg-[#13171f] rounded-2xl p-4 border border-[#1e2533]">
           <p className="text-gray-700 font-semibold mb-2">Join a Room</p>
           <input
             type="text"
             placeholder="Enter room code"
             value={inputCode}
             onChange={(e) => setInputCode(e.target.value.toUpperCase())}
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none text-gray-700 mb-3 text-center text-2xl font-bold tracking-widest"
+            className="w-full border border-[#1e2533] rounded-xl bg-[#1e2533] text-white px-4 py-3 outline-none text-gray-700 mb-3 text-center text-2xl font-bold tracking-widest"
             maxLength={5}
           />
           <button
@@ -675,14 +675,14 @@ const removePlayer = async (pid: string) => {
 
   // WAITING
   if (screen === "waiting") return (
-    <div className={`min-h-screen bg-gradient-to-br ${room?.mode === "tournament" ? "from-yellow-500 to-orange-600" : "from-purple-700 to-indigo-700"} font-sans max-w-md mx-auto flex flex-col items-center justify-center px-6`}>
+    <div className={`min-h-screen bg-gradient-to-br ${room?.mode === "tournament" ? "bg-[#0e1117]" : "bg-[#0e1117]"} font-sans max-w-md mx-auto flex flex-col items-center justify-center px-6`}>
       <h2 className="text-white text-2xl font-bold mb-2">
         {room?.mode === "tournament" ? "🏆 Tournament Lobby" : "⚔️ Battle Lobby"}
       </h2>
       <p className="text-white text-opacity-80 mb-6">Share this code with friends</p>
       <div className="bg-white rounded-3xl px-10 py-6 mb-8 text-center">
         <p className="text-gray-400 text-sm mb-1">Room Code</p>
-        <p className="text-gray-800 text-5xl font-bold tracking-widest">{roomCode}</p>
+        <p className="text-white text-5xl font-bold tracking-widest">{roomCode}</p>
       </div>
       <div className="w-full bg-white bg-opacity-10 rounded-2xl p-4 mb-6">
         <p className="text-white font-semibold mb-3">
@@ -763,7 +763,7 @@ const removePlayer = async (pid: string) => {
 
     return (
       <div className="min-h-screen bg-gray-100 font-sans max-w-md mx-auto pb-10">
-        <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-4 rounded-b-3xl mb-4">
+        <div className="bg-gradient-to-br bg-[#0e1117] p-4 rounded-b-3xl mb-4">
           <h1 className="text-white text-xl font-bold">{getRoundLabel()}</h1>
           <p className="text-yellow-100 text-sm">{room.subject} Tournament</p>
         </div>
@@ -784,7 +784,7 @@ const removePlayer = async (pid: string) => {
                 </div>
                 {match.players?.map((pid: string) => (
                   <div key={pid} className={`flex justify-between items-center py-2 px-3 rounded-xl mb-1 ${match.winner === pid ? "bg-yellow-50 border border-yellow-300" : "bg-gray-50"}`}>
-                    <p className={`font-medium ${match.winner === pid ? "text-yellow-600" : "text-gray-700"}`}>
+                    <p className={`font-medium ${match.winner === pid ? "text-yellow-600" : "text-white"}`}>
                       {match.winner === pid ? "🥇 " : ""}{getPlayerName(pid)}{pid === playerId ? " (You)" : ""}
                     </p>
                     <p className="font-bold text-gray-800">{match.scores?.[pid] || 0} pts</p>
@@ -901,21 +901,21 @@ const removePlayer = async (pid: string) => {
           </div>
 
           <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
-            <p className="text-gray-800 leading-relaxed" dangerouslySetInnerHTML={{ __html: q.question }} />
+            <p className="text-white leading-relaxed" dangerouslySetInnerHTML={{ __html: q.question }} />
           </div>
 
           <div className="flex flex-col gap-3 mb-4">
             {options.map((opt) => {
               if (hiddenOptions.includes(opt)) return null;
-              let style = "bg-white border-2 border-transparent";
+              let style = "bg-[#13171f] border-2 border-[#1e2533]";
               if (selected) {
                 if (opt === q.answer) style = "bg-green-100 border-2 border-green-500";
                 else if (opt === selected) style = "bg-red-100 border-2 border-red-500";
-                else style = "bg-gray-50 border-2 border-transparent opacity-60";
+                else style = "bg-[#0e1117] border-2 border-[#1e2533] opacity-40";
               }
               return (
                 <div key={opt} onClick={() => handleAnswer(opt)} className={`${style} rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all shadow-sm`}>
-                  <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-[#1e3a5f] text-[#60a5fa] flex items-center justify-center font-bold text-sm flex-shrink-0">
                     {opt.toUpperCase()}
                   </div>
                   <p className="text-gray-800" dangerouslySetInnerHTML={{ __html: q.option[opt] }} />
@@ -933,7 +933,7 @@ const removePlayer = async (pid: string) => {
                     : "✗ Wrong!"}
                 </p>
               </div>
-              <button onClick={handleNextQuestion} className={`w-full ${room.mode === "tournament" ? "bg-orange-500" : "bg-purple-600"} text-white py-4 rounded-2xl font-bold text-lg`}>
+              <button onClick={handleNextQuestion} className={`w-full ${room.mode === "tournament" ? "bg-orange-500" : "bg-[#16a34a]"} text-white py-4 rounded-2xl font-bold text-lg`}>
                 Next →
               </button>
             </div>
@@ -974,7 +974,7 @@ const removePlayer = async (pid: string) => {
           {showCalc && (
             <div className="fixed bottom-36 right-4 bg-white rounded-2xl shadow-2xl p-4 z-50 w-72">
               <div className="flex justify-between items-center mb-3">
-                <p className="font-bold text-gray-700">Calculator</p>
+                <p className="font-bold text-white">Calculator</p>
                 <button onClick={() => setShowCalc(false)} className="text-gray-400 text-xl">✕</button>
               </div>
               <div className="bg-gray-900 rounded-xl p-3 mb-3">
@@ -985,7 +985,7 @@ const removePlayer = async (pid: string) => {
                 {[
                   ["AC", () => calcClear(), "bg-red-100 text-red-600"],
                   ["⌫", () => calcBack(), "bg-orange-100 text-orange-600"],
-                  ["%", () => { const n = parseFloat(calcDisplay)/100; setCalcDisplay(String(n)); setCalcExpression(String(n)); }, "bg-gray-100 text-gray-600"],
+                  ["%", () => { const n = parseFloat(calcDisplay)/100; setCalcDisplay(String(n)); setCalcExpression(String(n)); }, "bg-gray-100 text-gray-400"],
                   ["÷", () => calcOperator("/"), "bg-orange-400 text-white"],
                   ["7", () => calcNumber("7"), "bg-gray-50 text-gray-800"],
                   ["8", () => calcNumber("8"), "bg-gray-50 text-gray-800"],
@@ -1019,7 +1019,7 @@ const removePlayer = async (pid: string) => {
           {showChat && (
             <div className="fixed bottom-48 right-4 bg-white rounded-2xl shadow-2xl z-50 w-72 flex flex-col" style={{height: "300px"}}>
               <div className="flex justify-between items-center p-3 border-b">
-                <p className="font-bold text-gray-700">💬 Team Chat</p>
+                <p className="font-bold text-white">💬 Team Chat</p>
                 <button onClick={() => setShowChat(false)} className="text-gray-400 text-xl">✕</button>
               </div>
               <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
@@ -1042,7 +1042,7 @@ const removePlayer = async (pid: string) => {
                   onChange={(e) => setChatMessage(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendChat()}
                   placeholder="Type a message..."
-                  className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none"
+                  className="flex-1 border border-[#1e2533] rounded-xl bg-[#1e2533] text-white px-3 py-2 text-sm outline-none"
                 />
                 <button onClick={sendChat} className="bg-purple-500 text-white px-3 py-2 rounded-xl text-sm font-bold">
                   Send
@@ -1062,18 +1062,18 @@ const removePlayer = async (pid: string) => {
     const players = getPlayers();
 
     return (
-      <div className={`min-h-screen bg-gradient-to-br ${room?.mode === "tournament" ? "from-yellow-500 to-orange-600" : "from-purple-700 to-indigo-700"} font-sans max-w-md mx-auto flex flex-col items-center justify-center px-6`}>
+      <div className={`min-h-screen bg-gradient-to-br ${room?.mode === "tournament" ? "bg-[#0e1117]" : "bg-[#0e1117]"} font-sans max-w-md mx-auto flex flex-col items-center justify-center px-6`}>
         {room?.mode === "tournament" ? (
           <>
             <div className="text-8xl mb-4">🏆</div>
             <h1 className="text-white text-3xl font-bold mb-2">Tournament Over!</h1>
             <p className="text-yellow-100 mb-6">We have a champion!</p>
-            <div className="bg-white rounded-3xl p-8 w-full text-center mb-6">
+            <div className="bg-[#13171f] rounded-3xl p-8 border border-[#1e2533] w-full text-center mb-6">
               <p className="text-gray-400 text-sm mb-2">👑 Tournament Champion</p>
               <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-3">
                 {champion?.name[0].toUpperCase()}
               </div>
-              <h2 className="text-gray-800 text-2xl font-bold">{champion?.name}</h2>
+              <h2 className="text-white text-2xl font-bold">{champion?.name}</h2>
               {room.tournament?.champion === playerId && (
                 <div className="mt-3 bg-yellow-50 rounded-xl p-3">
                   <p className="text-yellow-600 font-bold">🎉 That's you! Congratulations!</p>
@@ -1093,7 +1093,7 @@ const removePlayer = async (pid: string) => {
                     <p className={`font-bold ${i === 0 ? "text-gray-900" : "text-white"}`}>
                       {p.name} {p.id === playerId ? "(You)" : ""}
                     </p>
-                    <p className={`text-xs ${i === 0 ? "text-gray-700" : "text-purple-200"}`}>
+                    <p className={`text-xs ${i === 0 ? "text-white" : "text-purple-200"}`}>
                       {p.answered} answered · 🔥 streak: {p.streak}
                     </p>
                       </div>
