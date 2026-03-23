@@ -1,4 +1,5 @@
 "use client";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -69,7 +70,7 @@ export default function Home() {
   };
 
   if (authLoading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center font-sans" style={{ background: "#0e1117" }}>
+    <div className="min-h-screen flex flex-col items-center justify-center font-sans" style={{ background: "var(--bg)" }}>
       <div className="w-16 h-16 rounded-2xl bg-green-600 flex items-center justify-center text-3xl mb-4">🎓</div>
       <p className="text-white font-bold text-lg">JAMB CBT Practice</p>
       <p className="text-gray-500 text-sm mt-1">Loading...</p>
@@ -136,7 +137,7 @@ export default function Home() {
               ].map((s) => (
                 <div key={s.label} className="rounded-2xl p-3 text-center" style={{ background: s.color }}>
                   <p className="font-bold text-lg" style={{ color: s.text }}>{s.value}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#6b7280" }}>{s.label}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>{s.label}</p>
                 </div>
               ))}
             </div>
@@ -144,7 +145,7 @@ export default function Home() {
 
           {/* Quick Actions */}
           <div className="px-5 mb-6">
-            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#6b7280" }}>Quick Actions</p>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text3)" }}>Quick Actions</p>
             <div className="grid grid-cols-2 gap-3">
               <a href="/feed"
                 className="rounded-2xl p-4 text-left col-span-2" style={{ background: "linear-gradient(135deg, #064e3b, #1e1b4b)", border: "1px solid #4ade8033" }}>
@@ -187,8 +188,8 @@ export default function Home() {
           </div>
 {/* Features */}
           <div className="px-5 mb-6">
-            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#6b7280" }}>All Features</p>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#13171f" }}>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text3)" }}>All Features</p>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "var(--card)" }}>
               {[
                 { label: "Study Mode", desc: "Read AI notes then practice", icon: "📖", href: "/study-mode" },
                 { label: "Study Wizard", desc: "Personalized study plan", icon: "🧙", href: "/study-wizard" },
@@ -200,13 +201,13 @@ export default function Home() {
               ].map((f, i, arr) => (
                 <a key={f.label} href={f.href}
                   className="flex items-center gap-3 px-4 py-3.5 active:opacity-70"
-                  style={{ borderBottom: i < arr.length - 1 ? "1px solid #1e2533" : "none" }}>
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: "#1e2533" }}>
+                  style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none" }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: "var(--bg3)" }}>
                     {f.icon}
                   </div>
                   <div className="flex-1">
                     <p className="text-white text-sm font-medium">{f.label}</p>
-                    <p className="text-xs" style={{ color: "#6b7280" }}>{f.desc}</p>
+                    <p className="text-xs" style={{ color: "var(--text3)" }}>{f.desc}</p>
                   </div>
                   <span style={{ color: "#374151" }}>›</span>
                 </a>
@@ -218,20 +219,20 @@ export default function Home() {
           {examHistory.length > 0 && (
             <div className="px-5 mb-6">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b7280" }}>Recent Exams</p>
+                <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text3)" }}>Recent Exams</p>
                 <a href="/history" className="text-xs" style={{ color: "#4ade80" }}>See all →</a>
               </div>
-              <div className="rounded-2xl overflow-hidden" style={{ background: "#13171f" }}>
+              <div className="rounded-2xl overflow-hidden" style={{ background: "var(--card)" }}>
                 {examHistory.slice(-3).reverse().map((h: any, i: number, arr: any[]) => (
                   <div key={i} className="flex items-center gap-3 px-4 py-3.5"
-                    style={{ borderBottom: i < arr.length - 1 ? "1px solid #1e2533" : "none" }}>
+                    style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none" }}>
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0`}
                       style={{ background: h.percent >= 70 ? "#14532d" : h.percent >= 50 ? "#422006" : "#450a0a", color: h.percent >= 70 ? "#4ade80" : h.percent >= 50 ? "#fb923c" : "#f87171" }}>
                       {h.percent}%
                     </div>
                     <div className="flex-1">
                       <p className="text-white text-sm font-medium">{h.subject}</p>
-                      <p className="text-xs" style={{ color: "#6b7280" }}>{h.score}/{h.total} correct</p>
+                      <p className="text-xs" style={{ color: "var(--text3)" }}>{h.score}/{h.total} correct</p>
                     </div>
                     <p className="text-xs" style={{ color: "#374151" }}>{new Date(h.date).toLocaleDateString()}</p>
                   </div>
@@ -259,11 +260,11 @@ export default function Home() {
         <div>
           <div className="px-5 pt-10 pb-5">
             <h2 className="text-white text-xl font-bold">Practice Exam</h2>
-            <p className="text-sm mt-1" style={{ color: "#6b7280" }}>Select subjects and start your mock exam</p>
+            <p className="text-sm mt-1" style={{ color: "var(--text3)" }}>Select subjects and start your mock exam</p>
           </div>
 
           <div className="px-5 mb-4">
-            <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: "#13171f" }}>
+            <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: "var(--card)" }}>
               <span className="text-xl">{avatar}</span>
               <input type="text" placeholder="Enter your name" value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -273,7 +274,7 @@ export default function Home() {
 
           <div className="px-5 mb-3">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b7280" }}>Selected ({selected.length}/4)</p>
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text3)" }}>Selected ({selected.length}/4)</p>
             </div>
             <div className="flex flex-wrap gap-2">
               {selected.map((s) => (
@@ -283,21 +284,21 @@ export default function Home() {
           </div>
 
           <div className="px-5 mb-6">
-            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#6b7280" }}>Choose Subjects</p>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#13171f" }}>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text3)" }}>Choose Subjects</p>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "var(--card)" }}>
               {subjects.map((subject, i) => {
                 const isSelected = selected.includes(subject.name);
                 return (
                   <button key={subject.name} onClick={() => toggleSubject(subject.name)}
                     className="flex items-center gap-3 px-4 py-3.5 w-full text-left active:opacity-70"
-                    style={{ borderBottom: i < subjects.length - 1 ? "1px solid #1e2533" : "none", background: isSelected ? "#0f2918" : "transparent" }}>
+                    style={{ borderBottom: i < subjects.length - 1 ? "1px solid var(--border)" : "none", background: isSelected ? "#0f2918" : "transparent" }}>
                     <span className="text-xl flex-shrink-0">{subject.icon}</span>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium" style={{ color: isSelected ? "#4ade80" : "#fff" }}>{subject.name}</p>
                         {subject.required && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "#450a0a", color: "#f87171" }}>Required</span>}
                       </div>
-                      <p className="text-xs mt-0.5" style={{ color: "#6b7280" }}>{subject.questions} questions • {subject.time}</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>{subject.questions} questions • {subject.time}</p>
                     </div>
                     <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
                       style={{ borderColor: isSelected ? "#4ade80" : "#374151", background: isSelected ? "#4ade80" : "transparent" }}>
@@ -323,11 +324,11 @@ export default function Home() {
         <div>
           <div className="px-5 pt-10 pb-5">
             <h2 className="text-white text-xl font-bold">Battle Arena</h2>
-            <p className="text-sm mt-1" style={{ color: "#6b7280" }}>Challenge students across Nigeria</p>
+            <p className="text-sm mt-1" style={{ color: "var(--text3)" }}>Challenge students across Nigeria</p>
           </div>
 
           <div className="px-5">
-            <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "#13171f" }}>
+            <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "var(--card)" }}>
               {[
                 { label: "Online Lobby", desc: "See who is online and battle them", icon: "🌍", href: "/online" },
                 { label: "Quiz Battle", desc: "Create room and challenge a friend", icon: "⚔️", href: "/battle" },
@@ -342,13 +343,13 @@ export default function Home() {
               ].map((item, i, arr) => (
                 <a key={item.label} href={item.href}
                   className="flex items-center gap-3 px-4 py-4 active:opacity-70"
-                  style={{ borderBottom: i < arr.length - 1 ? "1px solid #1e2533" : "none" }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: "#1e2533" }}>
+                  style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: "var(--bg3)" }}>
                     {item.icon}
                   </div>
                   <div className="flex-1">
                     <p className="text-white font-medium text-sm">{item.label}</p>
-                    <p className="text-xs mt-0.5" style={{ color: "#6b7280" }}>{item.desc}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>{item.desc}</p>
                   </div>
                   <span style={{ color: "#374151" }}>›</span>
                 </a>
@@ -363,11 +364,11 @@ export default function Home() {
         <div>
           <div className="px-5 pt-10 pb-5">
             <h2 className="text-white text-xl font-bold">More</h2>
-            <p className="text-sm mt-1" style={{ color: "#6b7280" }}>Tools and settings</p>
+            <p className="text-sm mt-1" style={{ color: "var(--text3)" }}>Tools and settings</p>
           </div>
 
           <div className="px-5">
-            <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "#13171f" }}>
+            <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "var(--card)" }}>
               {[
                 { label: "Account & Settings", desc: "Profile, stats, preferences", icon: "⚙️", href: "/settings" },
                 { label: "Study Wizard", desc: "AI-powered study plan", icon: "🧙", href: "/study-wizard" },
@@ -382,25 +383,26 @@ export default function Home() {
               ].map((item, i, arr) => (
                 <a key={item.label} href={item.href}
                   className="flex items-center gap-3 px-4 py-4 active:opacity-70"
-                  style={{ borderBottom: i < arr.length - 1 ? "1px solid #1e2533" : "none" }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: "#1e2533" }}>
+                  style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: "var(--bg3)" }}>
                     {item.icon}
                   </div>
                   <div className="flex-1">
                     <p className="text-white font-medium text-sm">{item.label}</p>
-                    <p className="text-xs mt-0.5" style={{ color: "#6b7280" }}>{item.desc}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>{item.desc}</p>
                   </div>
                   <span style={{ color: "#374151" }}>›</span>
                 </a>
               ))}
             </div>
 
+            <div className="mb-3"><ThemeToggle /></div>
             <button onClick={() => signOut(auth).then(() => router.push("/login"))}
               className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl" style={{ background: "#1a0a0a" }}>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: "#450a0a" }}>🚪</div>
               <div className="flex-1 text-left">
                 <p className="font-medium text-sm" style={{ color: "#f87171" }}>Sign Out</p>
-                <p className="text-xs" style={{ color: "#6b7280" }}>See you next time!</p>
+                <p className="text-xs" style={{ color: "var(--text3)" }}>See you next time!</p>
               </div>
             </button>
           </div>
@@ -409,7 +411,7 @@ export default function Home() {
 
       {/* Bottom Nav */}
       <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50"
-        style={{ background: "#0e1117", borderTop: "1px solid #1e2533" }}>
+        style={{ background: "#0e1117", borderTop: "1px solid var(--border)" }}>
         <div className="flex items-center justify-around px-2 py-2">
           {navItems.map((item) => (
             <button key={item.id} onClick={() => setActiveTab(item.id)}

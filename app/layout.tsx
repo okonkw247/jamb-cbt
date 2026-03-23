@@ -4,68 +4,53 @@ import InstallPrompt from "@/components/InstallPrompt";
 import UpdateNotification from "@/components/UpdateNotification";
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+
 export const metadata: Metadata = {
   title: "JAMB CBT Practice - Prepare, Practice, Pass",
   description: "Free JAMB CBT practice app with real past questions for all subjects. Practice anytime, anywhere!",
   keywords: "JAMB, CBT, practice, past questions, Nigeria, UTME",
- 
-    openGraph: {
+  openGraph: {
     title: "JAMB CBT Practice",
     description: "Free JAMB CBT practice with real past questions!",
     url: "https://jamb-cbt-chi.vercel.app",
     siteName: "JAMB CBT Practice",
     type: "website",
-    images: [
-      {
-        url: "https://jamb-cbt-chi.vercel.app/og-image.png",
-        width: 400,
-        height: 400,
-        alt: "JAMB CBT Practice Logo",
-      },
-    ],
+    images: [{ url: "https://jamb-cbt-chi.vercel.app/og-image.png", width: 400, height: 400, alt: "JAMB CBT Practice Logo" }],
   },
-
-  twitter: {
-    card: "summary_large_image",
-    title: "JAMB CBT Practice",
-    description: "Free JAMB CBT practice with real past questions!",
-  },
-
- icons: {
-  icon: "/favicon.ico",
-  shortcut: "/favicon.ico",
-  apple: "/logo.png",
-
-  },
-
+  twitter: { card: "summary_large_image", title: "JAMB CBT Practice", description: "Free JAMB CBT practice with real past questions!" },
+  icons: { icon: "/favicon.ico", shortcut: "/favicon.ico", apple: "/logo.png" },
 };
 
-export const viewport = {
-  themeColor: "#1a5c2a",
-};
- 
+export const viewport = { themeColor: "#1a5c2a" };
+
+const themeScript = `
+  (function() {
+    try {
+      var theme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+    } catch(e) {}
+  })();
+`;
+
 const registerSW = `
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('/sw.js')
-        .then(function(reg) { console.log('SW registered'); })
-        .catch(function(err) { console.log('SW error:', err); });
-      navigator.serviceWorker.register('/firebase-messaging-sw.js')
-        .then(function(reg) { console.log('FCM SW registered'); })
-        .catch(function(err) { console.log('FCM SW error:', err); });
+      navigator.serviceWorker.register('/sw.js').catch(function(err) { console.log('SW error:', err); });
+      navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(function(err) { console.log('FCM SW error:', err); });
     });
   }
 `;
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-    <link rel="manifest" href="/manifest.json" />
-    <Script
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <Script
         async
         src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6685979500673281"
         crossOrigin="anonymous"
@@ -74,13 +59,10 @@ export default function RootLayout({
       <SpeedInsights />
       <body>
         {children}
-       <InstallPrompt />
-       <UpdateNotification />
-       <script dangerouslySetInnerHTML={{ __html: registerSW }} />
+        <InstallPrompt />
+        <UpdateNotification />
+        <script dangerouslySetInnerHTML={{ __html: registerSW }} />
       </body>
     </html>
   );
 }
-
-
-
