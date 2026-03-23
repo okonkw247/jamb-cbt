@@ -186,7 +186,7 @@ export default function Settings() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+    <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
         <p className="text-gray-400 text-sm">Loading your profile...</p>
@@ -195,7 +195,7 @@ export default function Settings() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-950 font-sans max-w-md mx-auto pb-24">
+    <div className="min-h-screen bg-[var(--bg)] font-sans max-w-md mx-auto pb-24">
       {/* Header */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-green-900 via-green-800 to-gray-900" />
@@ -249,7 +249,7 @@ export default function Settings() {
         {tab === 0 && (
           <div className="flex flex-col gap-4">
             {/* Avatar picker */}
-            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+            <div className="rounded-2xl p-4 border border-gray-800">
               <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Choose Avatar</p>
               <div className="grid grid-cols-4 gap-2">
                 {AVATARS.map((a) => (
@@ -269,7 +269,7 @@ export default function Settings() {
             </div>
 
             {/* Display name */}
-            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+            <div className="rounded-2xl p-4 border border-gray-800">
               <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Display Name</p>
               <input
                 type="text"
@@ -281,7 +281,7 @@ export default function Settings() {
             </div>
 
             {/* Username */}
-            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+            <div className="rounded-2xl p-4 border border-gray-800">
               <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Username</p>
               <p className="text-gray-500 text-xs mb-3">Friends will search you by this. No spaces. e.g. adams2025</p>
               <div className="flex items-center gap-2 bg-gray-800 rounded-xl px-4 py-3 border border-gray-700">
@@ -297,7 +297,7 @@ export default function Settings() {
             </div>
 
             {/* Bio */}
-            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+            <div className="rounded-2xl p-4 border border-gray-800">
               <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Bio</p>
               <textarea
                 value={bio}
@@ -309,7 +309,7 @@ export default function Settings() {
             </div>
 
             {/* School */}
-            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+            <div className="rounded-2xl p-4 border border-gray-800">
               <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">School</p>
               <input
                 type="text"
@@ -322,7 +322,7 @@ export default function Settings() {
 
             {/* Target & Year */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+              <div className="rounded-2xl p-4 border border-gray-800">
                 <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Target Score</p>
                 <input
                   type="number"
@@ -333,7 +333,7 @@ export default function Settings() {
                   min={100}
                 />
               </div>
-              <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+              <div className="rounded-2xl p-4 border border-gray-800">
                 <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Exam Year</p>
                 <select
                   value={examYear}
@@ -360,7 +360,7 @@ export default function Settings() {
                 { label: "Best Score", value: `${stats.bestScore}%`, icon: "🏆", color: "yellow" },
                 { label: "Day Streak", value: stats.streak, icon: "🔥", color: "orange" },
               ].map((s) => (
-                <div key={s.label} className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+                <div key={s.label} className="rounded-2xl p-4 border border-gray-800">
                   <div className="text-2xl mb-2">{s.icon}</div>
                   <p className="text-white text-2xl font-bold">{s.value}</p>
                   <p className="text-gray-400 text-xs mt-1">{s.label}</p>
@@ -369,7 +369,7 @@ export default function Settings() {
             </div>
 
             {/* Battle stats */}
-            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+            <div className="rounded-2xl p-4 border border-gray-800">
               <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-4">Battle Record</p>
               <div className="flex items-center gap-4 mb-3">
                 <div className="flex-1 text-center">
@@ -421,7 +421,7 @@ export default function Settings() {
         {/* SUBJECTS TAB */}
         {tab === 2 && (
           <div className="flex flex-col gap-4">
-            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+            <div className="rounded-2xl p-4 border border-gray-800">
               <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Favorite Subjects</p>
               <p className="text-gray-500 text-xs mb-4">Select subjects you want to focus on</p>
               <div className="flex flex-col gap-2">
@@ -450,7 +450,7 @@ export default function Settings() {
             </div>
 
             {favoriteSubjects.length > 0 && (
-              <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+              <div className="rounded-2xl p-4 border border-gray-800">
                 <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Your Focus Subjects</p>
                 <div className="flex flex-wrap gap-2">
                   {favoriteSubjects.map((s) => (
@@ -473,7 +473,7 @@ export default function Settings() {
               { label: "Streak Reminders", desc: "Daily reminder to keep your streak alive", value: notifStreak, set: setNotifStreak, icon: "🔥" },
               { label: "New Features", desc: "Be first to know about new features", value: notifNewFeature, set: setNotifNewFeature, icon: "✨" },
             ].map((n) => (
-              <div key={n.label} className="bg-gray-900 rounded-2xl p-4 border border-gray-800 flex items-center gap-4">
+              <div key={n.label} className="rounded-2xl p-4 border border-gray-800 flex items-center gap-4">
                 <div className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center text-xl flex-shrink-0">
                   {n.icon}
                 </div>
@@ -496,7 +496,7 @@ export default function Settings() {
         {tab === 4 && (
           <div className="flex flex-col gap-4">
             {/* Account info */}
-            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+            <div className="rounded-2xl p-4 border border-gray-800">
               <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Account Info</p>
               <div className="flex items-center gap-3 py-2">
                 <span className="text-gray-500 text-sm w-20">Email</span>
@@ -512,7 +512,7 @@ export default function Settings() {
             </div>
 
             {/* Change password */}
-            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800">
+            <div className="rounded-2xl p-4 border border-gray-800">
               <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">Change Password</p>
               {pwSuccess && (
                 <div className="bg-green-500 bg-opacity-10 border border-green-500 border-opacity-30 rounded-xl p-3 mb-3">

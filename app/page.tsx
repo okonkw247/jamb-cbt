@@ -96,7 +96,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen font-sans max-w-md mx-auto pb-24" style={{ background: "#0e1117", color: "#fff" }}>
+    <div className="min-h-screen font-sans max-w-md mx-auto pb-24" style={{ background: "var(--bg)", color: "var(--text)" }}>
 
       {/* Update Banner */}
       {hasNewUpdate && updateData && (
