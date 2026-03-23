@@ -148,17 +148,10 @@ export default function Home() {
             <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text3)" }}>Quick Actions</p>
             <div className="grid grid-cols-2 gap-3">
               <a href="/feed"
-                className="rounded-2xl p-4 text-left col-span-2" style={{ background: "linear-gradient(135deg, #064e3b, #1e1b4b)", border: "1px solid #4ade8033" }}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-2xl mb-1">🧠</p>
-                    <p className="text-white font-black text-base">Question Feed</p>
-                    <p className="text-xs mt-0.5" style={{ color: "#4ade80" }}>Scroll JAMB questions like TikTok · Earn XP</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: "rgba(74,222,128,0.15)", border: "1px solid #4ade8044" }}>▶</div>
-                  </div>
-                </div>
+                className="rounded-2xl p-4 text-left" style={{ background: "#1a1f2e" }}>
+                <p className="text-2xl mb-2">🧠</p>
+                <p className="text-white font-bold text-sm">Feed</p>
+                <p className="text-xs mt-0.5" style={{ color: "#4ade80" }}>Scroll questions</p>
               </a>
               <button onClick={() => setActiveTab("practice")}
                 className="rounded-2xl p-4 text-left" style={{ background: "#14532d" }}>
