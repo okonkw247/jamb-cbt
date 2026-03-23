@@ -16,6 +16,75 @@ const SUBJECTS = [
   { name: "Literature", icon: "📚" },
 ];
 
+// Curated Unsplash images per subject - cached forever
+const SUBJECT_IMAGES: Record<string, string[]> = {
+  "Use of English": [
+    "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&q=80",
+    "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=600&q=80",
+    "https://images.unsplash.com/photo-1519791883288-dc8bd696e667?w=600&q=80",
+  ],
+  "Mathematics": [
+    "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&q=80",
+    "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=600&q=80",
+    "https://images.unsplash.com/photo-1596495577886-d920f1fb7238?w=600&q=80",
+  ],
+  "Physics": [
+    "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=600&q=80",
+    "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80",
+    "https://images.unsplash.com/photo-1468421870903-4df1664ac249?w=600&q=80",
+  ],
+  "Biology": [
+    "https://images.unsplash.com/photo-1530026405186-ed1f139313f0?w=600&q=80",
+    "https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80",
+    "https://images.unsplash.com/photo-1628595351029-c2bf17511435?w=600&q=80",
+  ],
+  "Chemistry": [
+    "https://images.unsplash.com/photo-1603126857599-f6e157fa2fe6?w=600&q=80",
+    "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&q=80",
+    "https://images.unsplash.com/photo-1554475901-4538ddfbccc2?w=600&q=80",
+  ],
+  "Economics": [
+    "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&q=80",
+    "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=600&q=80",
+    "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?w=600&q=80",
+  ],
+  "Government": [
+    "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=600&q=80",
+    "https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=600&q=80",
+    "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&q=80",
+  ],
+  "Literature": [
+    "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80",
+    "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600&q=80",
+    "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=600&q=80",
+  ],
+  "Geography": [
+    "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=600&q=80",
+    "https://images.unsplash.com/photo-1614730321146-b6fa6a501b25?w=600&q=80",
+    "https://images.unsplash.com/photo-1521295121783-8a321d551ad2?w=600&q=80",
+  ],
+  "Commerce": [
+    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80",
+    "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=80",
+    "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=600&q=80",
+  ],
+  "Accounting": [
+    "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&q=80",
+    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&q=80",
+    "https://images.unsplash.com/photo-1591696205602-2f950c417cb9?w=600&q=80",
+  ],
+  "Agriculture": [
+    "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&q=80",
+    "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=80",
+    "https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=600&q=80",
+  ],
+};
+
+const getSubjectImage = (subject: string, index: number): string => {
+  const imgs = SUBJECT_IMAGES[subject] || SUBJECT_IMAGES["Use of English"];
+  return imgs[index % imgs.length];
+};
+
 interface Question {
   id: number;
   question: string;
