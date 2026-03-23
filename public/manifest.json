@@ -1,22 +1,17 @@
 {
   "name": "JAMB CBT Practice",
   "short_name": "JAMB CBT",
-  "description": "Free JAMB CBT practice with real past questions!",
+  "description": "Free JAMB CBT practice with real past questions for all subjects!",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a5c2a",
-  "theme_color": "#1a5c2a",
+  "background_color": "#0a1a0f",
+  "theme_color": "#16a34a",
   "orientation": "portrait",
   "icons": [
-    {
-      "src": "/logo.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/logo.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "/logo-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": [
+    { "src": "/splash-android.png", "sizes": "1080x1920", "type": "image/png" }
   ]
 }
