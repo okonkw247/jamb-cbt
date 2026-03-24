@@ -50,7 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="JAMB CBT" />
-        <link rel="apple-touch-icon" href="/logo-512.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="apple-touch-startup-image" href="/splash-iphone-x.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" />
         <link rel="apple-touch-startup-image" href="/splash-iphone8.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" />
         <link rel="apple-touch-startup-image" href="/splash-android.png" />

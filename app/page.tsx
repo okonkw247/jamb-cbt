@@ -6,6 +6,7 @@ import { ref, get } from "firebase/database";
 import { useRouter } from "next/navigation";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import ThemeToggle from "@/components/ThemeToggle";
+import SplashScreen from "@/components/SplashScreen";
 
 const subjects = [
   { name: "Use of English", icon: "📖", required: true, questions: 60 },
@@ -26,6 +27,11 @@ export default function Home() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const seen = sessionStorage.getItem("splashSeen");
+    return !seen;
+  });
   const [name, setName] = useState("");
   const [selected, setSelected] = useState<string[]>(["Use of English"]);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -55,6 +61,8 @@ export default function Home() {
     if (selected.length >= 4) return;
     setSelected([...selected, s]);
   };
+
+  if (showSplash) return <SplashScreen onDone={() => { sessionStorage.setItem("splashSeen", "1"); setShowSplash(false); }} />;
 
   if (authLoading) return (
     <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "var(--bg)" }}>
