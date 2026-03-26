@@ -24,25 +24,32 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // Catch Google redirect + any existing session
   useEffect(() => {
-    setGoogleLoading(true);
-    const unsub = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        // Save user to DB
-        await update(ref(db, `users/${user.uid}`), {
-          name: user.displayName || "Student",
-          email: user.email || "",
-          online: true,
-          lastSeen: Date.now(),
-        });
-        router.push("/");
-      } else {
-        setGoogleLoading(false);
-      }
+    // Check redirect result first
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (result?.user) {
+          await saveUser(result.user);
+          router.push("/");
+        }
+      })
+      .catch(console.error);
+
+    // Also watch auth state
+    const unsub = auth.onAuthStateChanged((user) => {
+      if (user) router.push("/");
     });
     return () => unsub();
   }, []);
+
+  const saveUser = async (user: any) => {
+    await update(ref(db, `users/${user.uid}`), {
+      name: user.displayName || "Student",
+      email: user.email || "",
+      online: true,
+      lastSeen: Date.now(),
+    });
+  };
 
   const handleError = (code: string) => {
     const errors: Record<string, string> = {
@@ -53,9 +60,11 @@ export default function Login() {
       "auth/weak-password": "Password must be at least 6 characters.",
       "auth/invalid-credential": "Invalid email or password.",
       "auth/popup-closed-by-user": "Google sign in was cancelled.",
+      "auth/popup-blocked": "Popup blocked. Trying redirect...",
       "auth/network-request-failed": "Network error. Check your connection.",
+      "auth/cancelled-popup-request": "Sign in cancelled.",
     };
-    setError(errors[code] || "Something went wrong. Please try again.");
+    setError(errors[code] || `Error: ${code}`);
   };
 
   const handleSubmit = async () => {
@@ -67,9 +76,7 @@ export default function Login() {
       if (isSignup) {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(cred.user, { displayName: name });
-        await update(ref(db, `users/${cred.user.uid}`), {
-          name, email, online: true, lastSeen: Date.now(),
-        });
+        await saveUser(cred.user);
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
@@ -84,14 +91,32 @@ export default function Login() {
   const handleGoogle = async () => {
     setError("");
     setGoogleLoading(true);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
-      await signInWithRedirect(auth, provider);
+      // Try popup first
+      const result = await signInWithPopup(auth, provider);
+      await saveUser(result.user);
+      router.push("/");
     } catch (err: any) {
-      handleError(err.code);
-    } finally {
-      setGoogleLoading(false);
+      // If popup fails on mobile, fall back to redirect
+      if (
+        err.code === "auth/popup-blocked" ||
+        err.code === "auth/popup-closed-by-user" ||
+        err.code === "auth/cancelled-popup-request" ||
+        err.code === "auth/operation-not-supported-in-this-environment"
+      ) {
+        try {
+          await signInWithRedirect(auth, provider);
+        } catch (redirectErr: any) {
+          handleError(redirectErr.code);
+          setGoogleLoading(false);
+        }
+      } else {
+        handleError(err.code);
+        setGoogleLoading(false);
+      }
     }
   };
 
@@ -102,24 +127,18 @@ export default function Login() {
       {/* Top visual */}
       <div className="relative overflow-hidden flex flex-col items-center justify-center pt-16 pb-10 px-6"
         style={{ background: "linear-gradient(160deg, #071a0e 0%, #0d2b18 60%, #0a1a0f 100%)" }}>
-        {/* Decorative rings */}
         <div className="absolute w-64 h-64 rounded-full opacity-10"
           style={{ border: "1px solid #22c55e", top: "-40px", right: "-40px" }} />
         <div className="absolute w-40 h-40 rounded-full opacity-10"
           style={{ border: "1px solid #22c55e", bottom: "-20px", left: "-20px" }} />
-
-        {/* Logo */}
-        <div className="mb-5 animate-fade-in">
+        <div className="mb-5">
           <img src="/logo-512.png" alt="JAMB CBT" width={80} height={80}
             style={{ borderRadius: "18px", boxShadow: "0 0 30px rgba(34,197,94,0.3)" }} />
         </div>
-
         <h1 className="text-white font-black text-2xl mb-1 text-center">JAMB CBT Practice</h1>
         <p className="text-center text-sm font-medium" style={{ color: "#22c55e" }}>
           Nigeria's #1 Free JAMB Prep App 🇳🇬
         </p>
-
-        {/* Stats row */}
         <div className="flex gap-6 mt-6">
           {[
             { value: "10K+", label: "Students" },
@@ -144,18 +163,14 @@ export default function Login() {
               background: !isSignup ? "var(--surface)" : "transparent",
               color: !isSignup ? "var(--text)" : "var(--text3)",
               boxShadow: !isSignup ? "var(--shadow-sm)" : "none"
-            }}>
-            Login
-          </button>
+            }}>Login</button>
           <button onClick={() => { setIsSignup(true); setError(""); }}
             className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
             style={{
               background: isSignup ? "var(--surface)" : "transparent",
               color: isSignup ? "var(--text)" : "var(--text3)",
               boxShadow: isSignup ? "var(--shadow-sm)" : "none"
-            }}>
-            Sign Up
-          </button>
+            }}>Sign Up</button>
         </div>
 
         {/* Google button */}
@@ -182,7 +197,7 @@ export default function Login() {
           <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
         </div>
 
-        {/* Form fields */}
+        {/* Fields */}
         <div className="flex flex-col gap-3 mb-4">
           {isSignup && (
             <div className="flex items-center gap-3 px-4 py-3.5 rounded-2xl"
@@ -194,7 +209,6 @@ export default function Login() {
                 style={{ color: "var(--text)" }} />
             </div>
           )}
-
           <div className="flex items-center gap-3 px-4 py-3.5 rounded-2xl"
             style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <span style={{ color: "var(--text3)" }}>✉️</span>
@@ -204,7 +218,6 @@ export default function Login() {
               className="flex-1 outline-none bg-transparent text-sm font-medium"
               style={{ color: "var(--text)" }} />
           </div>
-
           <div className="flex items-center gap-3 px-4 py-3.5 rounded-2xl"
             style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <span style={{ color: "var(--text3)" }}>🔒</span>
@@ -230,7 +243,7 @@ export default function Login() {
 
         {/* Submit */}
         <button onClick={handleSubmit} disabled={loading}
-          className="btn-primary w-full py-4 rounded-2xl text-base font-black mb-3 disabled:opacity-50">
+          className="btn-primary w-full py-4 rounded-2xl text-base font-black mb-4 disabled:opacity-50">
           {loading ? (
             <span className="flex items-center justify-center gap-2">
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -239,12 +252,10 @@ export default function Login() {
           ) : isSignup ? "Create Account →" : "Login →"}
         </button>
 
-        {/* Features list */}
-        <div className="rounded-2xl p-4 mt-4"
+        {/* Features */}
+        <div className="rounded-2xl p-4"
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <p className="text-xs font-bold mb-3" style={{ color: "var(--text3)" }}>
-            WHY JOIN JAMB CBT?
-          </p>
+          <p className="text-xs font-bold mb-3" style={{ color: "var(--text3)" }}>WHY JOIN JAMB CBT?</p>
           {[
             "✅ Real JAMB past questions — all subjects",
             "⚔️ Battle friends live in real time",
