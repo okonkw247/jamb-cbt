@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
 import {
   createUserWithEmailAndPassword,
@@ -7,6 +7,8 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
 } from "firebase/auth";
 import { ref, update } from "firebase/database";
 import { useRouter } from "next/navigation";
@@ -21,6 +23,22 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Handle redirect result on page load
+  useEffect(() => {
+    setGoogleLoading(true);
+    getRedirectResult(auth).then(async (cred) => {
+      if (cred?.user) {
+        await update(ref(db, `users/${cred.user.uid}`), {
+          name: cred.user.displayName || "Student",
+          email: cred.user.email,
+          online: true,
+          lastSeen: Date.now(),
+        });
+        router.push("/");
+      }
+    }).catch(() => {}).finally(() => setGoogleLoading(false));
+  }, []);
 
   const handleError = (code: string) => {
     const errors: Record<string, string> = {
@@ -65,14 +83,7 @@ export default function Login() {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
-      const cred = await signInWithPopup(auth, provider);
-      await update(ref(db, `users/${cred.user.uid}`), {
-        name: cred.user.displayName || "Student",
-        email: cred.user.email,
-        online: true,
-        lastSeen: Date.now(),
-      });
-      router.push("/");
+      await signInWithRedirect(auth, provider);
     } catch (err: any) {
       handleError(err.code);
     } finally {
