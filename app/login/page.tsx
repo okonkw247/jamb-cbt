@@ -27,17 +27,28 @@ export default function Login() {
   // Handle redirect result on page load
   useEffect(() => {
     setGoogleLoading(true);
-    getRedirectResult(auth).then(async (cred) => {
-      if (cred?.user) {
-        await update(ref(db, `users/${cred.user.uid}`), {
-          name: cred.user.displayName || "Student",
-          email: cred.user.email,
-          online: true,
-          lastSeen: Date.now(),
-        });
-        router.push("/");
-      }
-    }).catch(() => {}).finally(() => setGoogleLoading(false));
+    getRedirectResult(auth)
+      .then(async (cred) => {
+        if (cred?.user) {
+          await update(ref(db, `users/${cred.user.uid}`), {
+            name: cred.user.displayName || "Student",
+            email: cred.user.email,
+            online: true,
+            lastSeen: Date.now(),
+          });
+          router.push("/");
+          return;
+        }
+        // Also check if already signed in
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          router.push("/");
+        }
+      })
+      .catch((err) => {
+        console.error("Redirect error:", err);
+      })
+      .finally(() => setGoogleLoading(false));
   }, []);
 
   const handleError = (code: string) => {
