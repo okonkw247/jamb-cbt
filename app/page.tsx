@@ -144,25 +144,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Question Feed banner */}
-          <div className="px-5 mt-5 mb-4">
-            <a href="/feed" className="card card-hover block p-4 relative overflow-hidden"
-              style={{ background: "var(--surface)", borderColor: "var(--green)" }}>
-              <div className="absolute right-4 top-0 bottom-0 flex items-center text-5xl opacity-10">🧠</div>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-                  style={{ background: "var(--green-dim)" }}>🧠</div>
-                <div>
-                  <p className="font-black" style={{ color: "var(--text)" }}>Question Feed</p>
-                  <p className="text-xs" style={{ color: "var(--green)" }}>Scroll JAMB questions · Earn XP ↑</p>
-                </div>
-                <div className="ml-auto">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm"
-                    style={{ background: "var(--green)", color: "#fff" }}>▶</div>
-                </div>
-              </div>
-            </a>
-          </div>
+
 
           {/* Quick Actions */}
           <div className="px-5 mb-5">
