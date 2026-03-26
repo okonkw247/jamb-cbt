@@ -24,31 +24,24 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // Handle redirect result on page load
+  // Catch Google redirect + any existing session
   useEffect(() => {
     setGoogleLoading(true);
-    getRedirectResult(auth)
-      .then(async (cred) => {
-        if (cred?.user) {
-          await update(ref(db, `users/${cred.user.uid}`), {
-            name: cred.user.displayName || "Student",
-            email: cred.user.email,
-            online: true,
-            lastSeen: Date.now(),
-          });
-          router.push("/");
-          return;
-        }
-        // Also check if already signed in
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          router.push("/");
-        }
-      })
-      .catch((err) => {
-        console.error("Redirect error:", err);
-      })
-      .finally(() => setGoogleLoading(false));
+    const unsub = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        // Save user to DB
+        await update(ref(db, `users/${user.uid}`), {
+          name: user.displayName || "Student",
+          email: user.email || "",
+          online: true,
+          lastSeen: Date.now(),
+        });
+        router.push("/");
+      } else {
+        setGoogleLoading(false);
+      }
+    });
+    return () => unsub();
   }, []);
 
   const handleError = (code: string) => {
