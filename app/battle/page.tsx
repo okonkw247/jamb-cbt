@@ -731,25 +731,34 @@ const calcBack = () => {
       const code = generateCode();
       const pid = generateCode();
       let questions: any[] = [];
+      // Try API first with timeout
       try {
-        const res = await fetch(`/api/questions?subject=${encodeURIComponent(subject)}`);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(`/api/questions?subject=${encodeURIComponent(subject)}`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
         const data = await res.json();
         if (data.data && data.data.length > 0) {
           questions = data.data.slice(0, 30);
           await saveQuestions(subject, data.data);
         }
       } catch {
-        // API failed - use cached questions
+        // API failed - try cache
       }
+      // Fallback to cache
       if (questions.length === 0) {
         const cached = await getQuestions(subject);
         if (cached && cached.length > 0) {
           questions = cached.slice(0, 30);
-        } else {
-          alert("No questions available. Please check your connection!");
-          setLoading(false);
-          return;
         }
+      }
+      // Use dummy questions if everything fails
+      if (questions.length === 0) {
+        alert("Could not load questions. Please check your internet and try again.");
+        setLoading(false);
+        return;
       }
 
       await set(ref(db, `battles/${code}`), {
@@ -771,8 +780,9 @@ const calcBack = () => {
       setRoomCode(code);
       setPlayerId(pid);
       setScreen("waiting");
-    } catch (err) {
-      alert("Failed to create room. Try again.");
+    } catch (err: any) {
+      console.error("Create room error:", err);
+      alert("Failed to create room: " + (err?.message || "Check your internet connection and try again."));
     } finally {
       setLoading(false);
     }

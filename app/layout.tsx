@@ -4,6 +4,7 @@ import InstallPrompt from "@/components/InstallPrompt";
 import UpdateNotification from "@/components/UpdateNotification";
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import FeedbackButton from "@/components/FeedbackButton";
 
 export const metadata: Metadata = {
   title: "JAMB CBT Practice - Prepare, Practice, Pass",
@@ -67,6 +68,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <SpeedInsights />
       <body>
         {children}
+        <FeedbackButton />
         <InstallPrompt />
         <UpdateNotification />
         <script dangerouslySetInnerHTML={{ __html: registerSW }} />
