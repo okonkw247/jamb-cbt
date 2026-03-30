@@ -100,7 +100,10 @@ export default function Exam() {
   // Reset current question when switching subjects
   useEffect(() => { setCurrent(0); }, [activeSubject]);
 
-  // Timer
+  // Timer - only start when ALL subjects have loaded
+  const allLoaded = Object.keys(loadingSubjects).length > 0 && 
+    Object.values(loadingSubjects).every(v => v === false);
+    
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -109,7 +112,7 @@ export default function Exam() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [allLoaded]);
 
   const formatTime = (secs: number) => {
     const h = Math.floor(secs / 3600).toString().padStart(2, "0");
@@ -188,7 +191,7 @@ export default function Exam() {
         </div>
         <div className={`px-4 py-1.5 rounded-xl font-bold text-base ${timeLeft < 300 ? "bg-red-600 text-white animate-pulse" : "text-white"}`}
           style={{ background: timeLeft < 300 ? "#dc2626" : "rgba(255,255,255,0.1)" }}>
-          ⏱ {formatTime(timeLeft)}
+          {allLoaded ? `⏱ ${formatTime(timeLeft)}` : "⏳ Loading..."}
         </div>
         <button onClick={() => { if (confirm(`Submit exam?\n${totalAnswered} of ${totalQuestions} answered.`)) handleSubmit(); }}
           className="px-3 py-1.5 rounded-xl text-xs font-bold" style={{ background: colors.tab, color: "#fff" }}>

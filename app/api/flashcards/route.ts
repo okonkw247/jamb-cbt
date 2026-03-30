@@ -7,17 +7,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "API key not configured" }, { status: 500 });
   }
 
-  const prompt = `Generate 10 flashcards for JAMB students studying "${topic}" in ${subject}.
+  const prompt = `Generate 20 flashcards for JAMB students studying "${topic}" in ${subject}.
 
 Return ONLY valid JSON, no markdown, no backticks:
 {
   "cards": [
-    {"front": "Question or term", "back": "Answer or definition"},
-    {"front": "Question or term", "back": "Answer or definition"}
+    {"front": "Question or term", "back": "Detailed answer with explanation"},
+    {"front": "Question or term", "back": "Detailed answer with explanation"}
   ]
 }
 
-Make questions JAMB-style. Keep answers short and clear. 10 cards total.`;
+Rules:
+- Mix question types: definitions, fill-in-blanks, JAMB past questions, calculations
+- Answers must be detailed enough to actually teach the student
+- Include key facts JAMB examiners love to test
+- Use Nigerian context where possible
+- 20 cards total`;
 
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -28,7 +33,7 @@ Make questions JAMB-style. Keep answers short and clear. 10 cards total.`;
       },
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
-        max_tokens: 1500,
+        max_tokens: 3000,
         temperature: 0.3,
         messages: [{ role: "user", content: prompt }],
       }),
