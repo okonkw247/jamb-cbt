@@ -612,6 +612,39 @@ const calcBack = () => {
     "Government", "Literature"
   ];
 
+  // Auto-rejoin if user accidentally left
+  useEffect(() => {
+    const saved = localStorage.getItem("activeRoom");
+    if (saved && screen === "lobby") {
+      try {
+        const { roomCode: savedCode, playerId: savedPid, playerName: savedName } = JSON.parse(saved);
+        if (savedCode && savedPid) {
+          // Check if room still exists and is active
+          get(ref(db, `battles/${savedCode}`)).then((snap) => {
+            const data = snap.val();
+            if (data && data.status !== "finished" && data.players?.[savedPid]) {
+              setRoomCode(savedCode);
+              setPlayerId(savedPid);
+              setPlayerName(savedName || "");
+              if (data.status === "playing") {
+                setRoom(data);
+                setScreen("playing");
+                setCurrentIndex(0);
+                setTimeLeft(35);
+              } else {
+                setScreen("waiting");
+              }
+            } else {
+              localStorage.removeItem("activeRoom");
+            }
+          });
+        }
+      } catch {
+        localStorage.removeItem("activeRoom");
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (!roomCode) return;
     const roomRef = ref(db, `battles/${roomCode}`);
@@ -811,6 +844,8 @@ const calcBack = () => {
       setRoomCode(code);
       setPlayerId(pid);
       setScreen("waiting");
+      // Save to localStorage so user can rejoin if they accidentally leave
+      localStorage.setItem("activeRoom", JSON.stringify({ roomCode: code, playerId: pid, playerName }));
     } catch (err) {
       alert("Failed to join room.");
     } finally {
@@ -868,7 +903,7 @@ const calcBack = () => {
 
     if (room.mode === "tournament" && myMatch) {
       const currentScore = myMatch.scores?.[playerId] || 0;
-      const timeBonus = Math.floor(timeLeft / 3);
+      const timeBonus = Math.floor(timeLeft / 5); // Max 7 bonus points for speed
       const points = isCorrect ? 1 + timeBonus : 0;
       const path = myRound === "final"
         ? `battles/${roomCode}/tournament/final/scores/${playerId}`
@@ -882,7 +917,7 @@ const calcBack = () => {
       const currentScore = player?.score || 0;
       const currentStreak = player?.streak || 0;
       const currentAnswered = player?.answered || 0;
-      const timeBonus = Math.floor(timeLeft / 3);
+      const timeBonus = Math.floor(timeLeft / 5); // Max 7 bonus points for speed
       const streakBonus = isCorrect ? Math.floor(currentStreak / 2) : 0;
       const pointsEarned = isCorrect ? 1 + timeBonus + streakBonus : 0;
       const newStreak = isCorrect ? currentStreak + 1 : 0;
