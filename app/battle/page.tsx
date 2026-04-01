@@ -1471,14 +1471,20 @@ const removePlayer = async (pid: string) => {
           </button>
 
           {/* Chat Button */}
-              <div className="fixed bottom-36 right-4 z-50">
+          <div className="fixed bottom-36 right-4 z-50">
             <button
               onClick={() => {
                 setShowChat(!showChat);
                 setUnreadCount(0);
                 setLastSeenCount(messages.length);
               }}
-              className="relative bg-blue-500 text-white rounded-2xl shadow-lg flex flex-col items-center justify-center px-3 py-2 gap-0.5"
+              style={{
+                background: showChat ? "#7c3aed" : "#18181b",
+                border: "1px solid #27272a",
+                boxShadow: showChat ? "0 0 20px rgba(124,58,237,0.4)" : "0 4px 24px rgba(0,0,0,0.6)",
+                transition: "all 0.2s ease",
+              }}
+              className="relative rounded-2xl flex flex-col items-center justify-center px-3 py-2 gap-0.5"
             >
               <span className="text-xl">💬</span>
               <span className="text-white text-xs font-bold">Chat</span>
@@ -1535,17 +1541,100 @@ const removePlayer = async (pid: string) => {
             </div>
           )}
 
-          {/* Chat Popup */}
+          {/* Chat Popup - Whop Style */}
           {showChat && (
-            <div className="fixed bottom-48 right-4 rounded-2xl shadow-2xl z-50 w-72 flex flex-col" style={{height: "300px"}}>
-              <div className="flex justify-between items-center p-3 border-b">
-                <p className="font-bold text-white">💬 Team Chat</p>
-                <button onClick={() => setShowChat(false)} className="text-gray-400 text-xl">✕</button>
+            <div
+              className="fixed bottom-48 right-4 z-50 flex flex-col rounded-2xl overflow-hidden"
+              style={{
+                width: "300px",
+                height: "360px",
+                background: "#09090b",
+                border: "1px solid #27272a",
+                boxShadow: "0 24px 60px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.03)",
+              }}
+            >
+              <div
+                className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+                style={{ background: "#111113", borderBottom: "1px solid #1f1f23" }}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-400" style={{ boxShadow: "0 0 6px #4ade80" }} />
+                  <p className="font-bold text-sm" style={{ color: "#fafafa", letterSpacing: "-0.01em" }}>Live Chat</p>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: "#1f1f23", color: "#71717a" }}>
+                    {messages.length}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowChat(false)}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  style={{ background: "#1f1f23", color: "#71717a" }}
+                >✕</button>
               </div>
-              <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
-                {messages.length === 0 && (
-                  <p className="text-gray-400 text-xs text-center mt-4">No messages yet. Say something!</p>
+              <div
+                className="flex-1 overflow-y-auto flex flex-col gap-3 px-3 py-3"
+                style={{ background: "#09090b", scrollbarWidth: "none" }}
+              >
+                {messages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full gap-2">
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl" style={{ background: "#18181b" }}>💬</div>
+                    <p className="text-xs font-medium" style={{ color: "#52525b" }}>No messages yet</p>
+                    <p className="text-xs" style={{ color: "#3f3f46" }}>Be the first to say something!</p>
+                  </div>
+                ) : (
+                  messages.map((msg, i) => {
+                    const isMe = msg.name === playerName;
+                    return (
+                      <div key={i} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                        <p className="text-xs mb-1 px-1 font-semibold" style={{ color: isMe ? "#a78bfa" : "#71717a" }}>
+                          {isMe ? "You" : msg.name}
+                        </p>
+                        <div
+                          className="px-3 py-2 rounded-2xl text-sm max-w-[210px] leading-snug"
+                          style={isMe ? {
+                            background: "#7c3aed",
+                            color: "#fff",
+                            borderBottomRightRadius: "4px",
+                            boxShadow: "0 2px 12px rgba(124,58,237,0.3)",
+                          } : {
+                            background: "#18181b",
+                            color: "#e4e4e7",
+                            border: "1px solid #27272a",
+                            borderBottomLeftRadius: "4px",
+                          }}
+                        >
+                          {msg.text}
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
+              </div>
+              <div
+                className="flex items-center gap-2 px-3 py-3 flex-shrink-0"
+                style={{ background: "#111113", borderTop: "1px solid #1f1f23" }}
+              >
+                <input
+                  type="text"
+                  value={chatMessage}
+                  onChange={(e) => setChatMessage(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && sendChat()}
+                  placeholder="Send a message..."
+                  className="flex-1 text-sm outline-none rounded-xl px-3 py-2"
+                  style={{ background: "#18181b", border: "1px solid #27272a", color: "#fafafa", caretColor: "#7c3aed" }}
+                />
+                <button
+                  onClick={sendChat}
+                  disabled={!chatMessage.trim()}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-30"
+                  style={{ background: "#7c3aed", boxShadow: "0 0 16px rgba(124,58,237,0.4)" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
                 {messages.map((msg, i) => (
                   <div key={i} className={`flex flex-col ${msg.name === playerName ? "items-end" : "items-start"}`}>
                     <p className="text-gray-400 text-xs mb-0.5">{msg.name}</p>
