@@ -40,6 +40,19 @@ const subjectColors: { [key: string]: { bg: string; tab: string; accent: string 
   "Agriculture":     { bg: "#0e1a0e", tab: "#166534", accent: "#4ade80" },
 };
 
+// Text to speech function
+const speakQuestion = (text: string) => {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel(); // Stop any current speech
+  const clean = text.replace(/<[^>]*>/g, ''); // Remove HTML tags
+  const utterance = new SpeechSynthesisUtterance(clean);
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  utterance.lang = 'en-NG'; // Nigerian English
+  window.speechSynthesis.speak(utterance);
+};
+
 export default function Exam() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -272,7 +285,15 @@ export default function Exam() {
 
           {/* Question text */}
           <div className="rounded-2xl p-4 mb-4" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <p className="text-white text-sm leading-relaxed">{q.question}</p>
+            <div className="flex items-start gap-2">
+              <p className="text-white text-sm leading-relaxed flex-1">{q.question}</p>
+              <button onClick={() => speakQuestion(q.question)}
+                className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ background: "rgba(255,255,255,0.1)" }}
+                title="Read question aloud">
+                🔊
+              </button>
+            </div>
           </div>
 
           {/* Options */}

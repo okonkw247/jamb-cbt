@@ -36,7 +36,7 @@ IMPORTANT: Return ONLY valid JSON. No markdown. No backticks. No extra text. Kee
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
+        model: "llama-3.3-70b-versatile",
         max_tokens: 2000,
         temperature: 0.3,
         messages: [{ role: "user", content: prompt }],

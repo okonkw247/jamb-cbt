@@ -1635,29 +1635,7 @@ const removePlayer = async (pid: string) => {
               </div>
             </div>
           )}
-                {messages.map((msg, i) => (
-                  <div key={i} className={`flex flex-col ${msg.name === playerName ? "items-end" : "items-start"}`}>
-                    <p className="text-gray-400 text-xs mb-0.5">{msg.name}</p>
-                    <div className={`px-3 py-2 rounded-xl text-sm max-w-48 ${msg.name === playerName ? "bg-purple-500 text-white" : "bg-gray-100 text-white"}`}>
-                      {msg.text}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="p-3 border-t flex gap-2">
-                <input
-                  type="text"
-                  value={chatMessage}
-                  onChange={(e) => setChatMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendChat()}
-                  placeholder="Type a message..."
-                  className="flex-1 border border-gray-700 rounded-xl bg-gray-700 text-white px-3 py-2 text-sm outline-none"
-                />
-                <button onClick={sendChat} className="bg-purple-500 text-white px-3 py-2 rounded-xl text-sm font-bold">
-                  Send
-                </button>
-              </div>
-            </div>
+
           )}
       </div>
     );
