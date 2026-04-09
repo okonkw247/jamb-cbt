@@ -1510,7 +1510,7 @@ const removePlayer = async (pid: string) => {
               <div className="grid grid-cols-4 gap-1.5">
                 {[
                   ["AC", () => calcClear(), "bg-red-100 text-red-600"],
-                  ["⌫", () => calcBack(), "bg-orange-100 text-orange-600"],
+                  ["⌫", () => calcBack(), "bg-gray-600 text-white"],
                   ["%", () => { const n = parseFloat(calcDisplay)/100; setCalcDisplay(String(n)); setCalcExpression(String(n)); }, "bg-gray-100 text-gray-400"],
                   ["÷", () => calcOperator("/"), "bg-orange-400 text-white"],
                   ["7", () => calcNumber("7"), "bg-gray-50 text-white"],
@@ -1544,13 +1544,12 @@ const removePlayer = async (pid: string) => {
           {/* Chat Popup - Whop Style */}
           {showChat && (
             <div
-              className="fixed bottom-48 right-4 z-50 flex flex-col rounded-2xl overflow-hidden"
+              className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-3xl overflow-hidden max-w-md mx-auto"
               style={{
-                width: "300px",
-                height: "360px",
+                height: "55vh",
                 background: "#09090b",
                 border: "1px solid #27272a",
-                boxShadow: "0 24px 60px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.03)",
+                boxShadow: "0 -8px 40px rgba(0,0,0,0.9)",
               }}
             >
               <div
