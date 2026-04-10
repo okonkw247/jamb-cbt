@@ -80,30 +80,16 @@ export default function Login() {
     setGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
-
     try {
-      // Try popup first
       const result = await signInWithPopup(auth, provider);
       await saveUser(result.user);
       router.push("/");
     } catch (err: any) {
-      // If popup fails on mobile, fall back to redirect
-      if (
-        err.code === "auth/popup-blocked" ||
-        err.code === "auth/popup-closed-by-user" ||
-        err.code === "auth/cancelled-popup-request" ||
-        err.code === "auth/operation-not-supported-in-this-environment"
-      ) {
-        try {
-          await signInWithRedirect(auth, provider);
-        } catch (redirectErr: any) {
-          handleError(redirectErr.code);
-          setGoogleLoading(false);
-        }
-      } else {
+      if (err.code !== "auth/popup-closed-by-user" &&
+          err.code !== "auth/cancelled-popup-request") {
         handleError(err.code);
-        setGoogleLoading(false);
       }
+      setGoogleLoading(false);
     }
   };
 
