@@ -7,8 +7,6 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
 } from "firebase/auth";
 import { ref, update } from "firebase/database";
 import { useRouter } from "next/navigation";
