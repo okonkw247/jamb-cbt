@@ -7,6 +7,8 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
 } from "firebase/auth";
 import { ref, update } from "firebase/database";
 import { useRouter } from "next/navigation";
@@ -23,6 +25,15 @@ export default function Login() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (result?.user) {
+          await saveUser(result.user);
+          router.push("/");
+        }
+      })
+      .catch(console.error);
+
     const unsub = auth.onAuthStateChanged((user) => {
       if (user) router.push("/");
     });
@@ -85,11 +96,22 @@ export default function Login() {
       await saveUser(result.user);
       router.push("/");
     } catch (err: any) {
-      if (err.code !== "auth/popup-closed-by-user" &&
-          err.code !== "auth/cancelled-popup-request") {
+      if (
+        err.code === "auth/popup-blocked" ||
+        err.code === "auth/popup-closed-by-user" ||
+        err.code === "auth/cancelled-popup-request" ||
+        err.code === "auth/operation-not-supported-in-this-environment"
+      ) {
+        try {
+          await signInWithRedirect(auth, provider);
+        } catch (redirectErr: any) {
+          handleError(redirectErr.code);
+          setGoogleLoading(false);
+        }
+      } else {
         handleError(err.code);
+        setGoogleLoading(false);
       }
-      setGoogleLoading(false);
     }
   };
 
