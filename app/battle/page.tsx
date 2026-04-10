@@ -1634,8 +1634,6 @@ const removePlayer = async (pid: string) => {
               </div>
             </div>
           )}
-
-          )}
       </div>
     );
    }
