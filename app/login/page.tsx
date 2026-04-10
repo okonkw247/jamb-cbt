@@ -23,17 +23,6 @@ export default function Login() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
-    // Check redirect result first
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (result?.user) {
-          await saveUser(result.user);
-          router.push("/");
-        }
-      })
-      .catch(console.error);
-
-    // Also watch auth state
     const unsub = auth.onAuthStateChanged((user) => {
       if (user) router.push("/");
     });
