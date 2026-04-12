@@ -1543,10 +1543,6 @@ const removePlayer = async (pid: string) => {
 
           {/* Chat Popup - Whop Style */}
           {showChat && (
-            <>
-            <div className="fixed inset-0 z-40" 
-              style={{background: "rgba(0,0,0,0.6)"}}
-              onClick={() => setShowChat(false)} />
             <div
               className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-3xl overflow-hidden max-w-md mx-auto"
               style={{
