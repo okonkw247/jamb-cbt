@@ -527,14 +527,14 @@ export default function Battle() {
   const [playerId, setPlayerId] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(35);
+  const [timeLeft, setTimeLeft] = useState(60);
   const [subject, setSubject] = useState("Use of English");
   const [mode, setMode] = useState<"casual" | "tournament">("casual");
   const [loading, setLoading] = useState(false);
   const [visibleReactions, setVisibleReactions] = useState<{ emoji: string; name: string; id: string }[]>([]);
   const [fiftyUsed, setFiftyUsed] = useState(false);
   const [hiddenOptions, setHiddenOptions] = useState<string[]>([]);
-  const [answerTime, setAnswerTime] = useState(35);
+  const [answerTime, setAnswerTime] = useState(60);
   const [showStreak, setShowStreak] = useState(false);
   const [streakCount, setStreakCount] = useState(0);
   const [showCalc, setShowCalc] = useState(false);
@@ -630,7 +630,7 @@ const calcBack = () => {
                 setRoom(data);
                 setScreen("playing");
                 setCurrentIndex(0);
-                setTimeLeft(35);
+                setTimeLeft(60);
               } else {
                 setScreen("waiting");
               }
@@ -667,7 +667,7 @@ const calcBack = () => {
             setShowIntro(false);
             setScreen("playing");
             setCurrentIndex(0);
-            setTimeLeft(35);
+            setTimeLeft(60);
           }, players.length * 2000 + 500);
         }
       }
@@ -695,7 +695,7 @@ const calcBack = () => {
                 setShowIntro(false);
                 setScreen("playing");
                 setCurrentIndex(0);
-                setTimeLeft(35);
+                setTimeLeft(60);
                 setSelected(null);
               }, players.length * 2000 + 500);
             }
@@ -716,7 +716,7 @@ const calcBack = () => {
         setScreen("waiting");
         setCurrentIndex(0);
         setSelected(null);
-        setTimeLeft(35);
+        setTimeLeft(60);
         setFiftyUsed(false);
       }
        
@@ -903,7 +903,7 @@ const calcBack = () => {
 
     if (room.mode === "tournament" && myMatch) {
       const currentScore = myMatch.scores?.[playerId] || 0;
-      const timeBonus = Math.floor(timeLeft / 5); // Max 7 bonus points for speed
+      const timeBonus = Math.floor(timeLeft / 4); // Max 15 bonus points - faster = higher score
       const points = isCorrect ? 1 + timeBonus : 0;
       const path = myRound === "final"
         ? `battles/${roomCode}/tournament/final/scores/${playerId}`
@@ -917,7 +917,7 @@ const calcBack = () => {
       const currentScore = player?.score || 0;
       const currentStreak = player?.streak || 0;
       const currentAnswered = player?.answered || 0;
-      const timeBonus = Math.floor(timeLeft / 5); // Max 7 bonus points for speed
+      const timeBonus = Math.floor(timeLeft / 4); // Max 15 bonus points - faster = higher score
       const streakBonus = isCorrect ? Math.floor(currentStreak / 2) : 0;
       const pointsEarned = isCorrect ? 1 + timeBonus + streakBonus : 0;
       const newStreak = isCorrect ? currentStreak + 1 : 0;
@@ -992,8 +992,8 @@ const calcBack = () => {
 
     setCurrentIndex(nextIndex);
     setSelected(null);
-    setTimeLeft(35);
-    setAnswerTime(35);
+    setTimeLeft(60);
+    setAnswerTime(60);
     setHiddenOptions([]);
   };
 
@@ -1510,7 +1510,7 @@ const removePlayer = async (pid: string) => {
               <div className="grid grid-cols-4 gap-1.5">
                 {[
                   ["AC", () => calcClear(), "bg-red-100 text-red-600"],
-                  ["⌫", () => calcBack(), "bg-gray-600 text-white"],
+                  ["⌫", () => calcBack(), "bg-[#2a2a3a] text-white"],
                   ["%", () => { const n = parseFloat(calcDisplay)/100; setCalcDisplay(String(n)); setCalcExpression(String(n)); }, "bg-gray-100 text-gray-400"],
                   ["÷", () => calcOperator("/"), "bg-orange-400 text-white"],
                   ["7", () => calcNumber("7"), "bg-gray-50 text-white"],
@@ -1543,10 +1543,14 @@ const removePlayer = async (pid: string) => {
 
           {/* Chat Popup - Whop Style */}
           {showChat && (
+            <>
+            <div className="fixed inset-0 z-40" 
+              style={{background: "rgba(0,0,0,0.6)"}}
+              onClick={() => setShowChat(false)} />
             <div
               className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-3xl overflow-hidden max-w-md mx-auto"
               style={{
-                height: "55vh",
+                height: "50vh",
                 background: "#09090b",
                 border: "1px solid #27272a",
                 boxShadow: "0 -8px 40px rgba(0,0,0,0.9)",

@@ -405,7 +405,7 @@ export default function Exam() {
               }}
                 className={`py-3 rounded-xl text-sm font-bold ${btn === "=" ? "col-span-1" : ""}`}
                 style={{
-                  background: btn === "=" ? colors.tab : ["C", "±", "%", "÷", "×", "-", "+"].includes(btn) ? "#374151" : "#1e2533",
+                  background: btn === "=" ? "#16a34a" : ["C", "±", "%", "÷", "×", "-", "+"].includes(btn) ? "#374151" : "#2a2a3a",
                   color: "#fff",
                   gridColumn: btn === "0" ? "span 1" : undefined,
                 }}>
