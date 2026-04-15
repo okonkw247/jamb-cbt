@@ -28,28 +28,29 @@ export async function GET(req: NextRequest) {
   }
 
   const alocKey = subjectMap[subject] || "english";
-  const url = topic
-    ? "https://questions.aloc.com.ng/api/v2/q/40?subject=" + alocKey + "&topic=" + encodeURIComponent(topic) + "&type=utme"
-    : "https://questions.aloc.com.ng/api/v2/q/40?subject=" + alocKey + "&type=utme";
+  const url = "https://questions.aloc.com.ng/api/v2/q/40?subject=" + alocKey + "&type=utme";
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(url, {
-      headers: { Accept: "application/json", AccessToken: "QB-de92a6179a6e85d1d140" },
-      signal: controller.signal,
+      headers: { 
+        Accept: "application/json", 
+        AccessToken: "QB-de92a6179a6e85d1d140" 
+      },
     });
-    clearTimeout(timeout);
+    
     const data = await res.json();
+    console.log("ALOC response status:", res.status);
+    console.log("ALOC data length:", data.data?.length);
 
-    if (data.data?.length > 0) {
+    if (data.data && data.data.length > 0) {
       cache[cacheKey] = { data, timestamp: Date.now() };
+      return NextResponse.json(data);
     }
-    return NextResponse.json(data, { headers: { "X-Cache": "ALOC" } });
-  } catch (err) {
-    if (cache[cacheKey]) {
-      return NextResponse.json(cache[cacheKey].data, { headers: { "X-Cache": "STALE" } });
-    }
-    return NextResponse.json({ error: "Failed", data: [] }, { status: 500 });
+
+    return NextResponse.json({ error: "No questions", data: [] }, { status: 404 });
+
+  } catch (err: any) {
+    console.error("ALOC fetch error:", err.message);
+    return NextResponse.json({ error: err.message, data: [] }, { status: 500 });
   }
 }
