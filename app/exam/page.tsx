@@ -118,9 +118,10 @@ export default function Exam() {
     Object.values(loadingSubjects).every(v => v === false);
     
   useEffect(() => {
+    if (!allLoaded) return;
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 1) { clearInterval(timer); handleSubmit(); return 0; }
+        if (prev <= 1) { clearInterval(timer); handleSubmitRef.current(); return 0; }
         return prev - 1;
       });
     }, 1000);
@@ -147,6 +148,9 @@ export default function Exam() {
     sessionStorage.setItem("examResult", JSON.stringify({ name, results, multiSubject: true }));
     router.push("/results");
   };
+
+  const handleSubmitRef = useRef(handleSubmit);
+  useEffect(() => { handleSubmitRef.current = handleSubmit; });
 
   const setAnswer = (opt: string) => {
     setAllSelected((prev) => ({
