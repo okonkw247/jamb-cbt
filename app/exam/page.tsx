@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { saveQuestions, getQuestions } from "@/lib/questionCache";
+import ExamLoader from "@/components/ExamLoader";
 
 interface Question {
   id: number;
@@ -196,6 +197,18 @@ export default function Exam() {
   };
 
   const q = questions[current];
+
+  if (!allLoaded) {
+    return (
+      <ExamLoader
+        subjectsList={subjectsList}
+        loadingSubjects={loadingSubjects}
+        accent={colors.accent}
+        tab={colors.tab}
+        bg={colors.bg}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen font-sans max-w-md mx-auto flex flex-col" style={{ background: colors.bg, transition: "background 0.3s" }}>
