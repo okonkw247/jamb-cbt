@@ -31,13 +31,19 @@ export async function GET(req: NextRequest) {
   const url = "https://questions.aloc.com.ng/api/v2/q/40?subject=" + alocKey + "&type=utme";
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
     const res = await fetch(url, {
       headers: { 
         Accept: "application/json", 
-        AccessToken: "QB-de92a6179a6e85d1d140" 
+        AccessToken: "QB-de92a6179a6e85d1d140",
+        signal: controller.signal,
       },
     });
     
+    clearTimeout(timeoutId);
+
     const data = await res.json();
     console.log("ALOC response status:", res.status);
     console.log("ALOC data length:", data.data?.length);
