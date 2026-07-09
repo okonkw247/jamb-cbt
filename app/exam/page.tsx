@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { saveQuestions, getQuestions } from "@/lib/questionCache";
 import ExamLoader from "@/components/ExamLoader";
@@ -54,7 +54,7 @@ const speakQuestion = (text: string) => {
   window.speechSynthesis.speak(utterance);
 };
 
-export default function Exam() {
+function ExamContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const name = searchParams.get("name") || "Candidate";
@@ -433,5 +433,18 @@ export default function Exam() {
         </div>
       )}
     </div>
+  );
+}
+
+
+export default function Exam() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <p className="text-white font-bold">Loading exam...</p>
+      </div>
+    }>
+      <ExamContent />
+    </Suspense>
   );
 }
