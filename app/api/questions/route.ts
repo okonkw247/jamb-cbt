@@ -38,8 +38,8 @@ export async function GET(req: NextRequest) {
       headers: { 
         Accept: "application/json", 
         AccessToken: "QB-de92a6179a6e85d1d140",
-        signal: controller.signal,
       },
+      signal: controller.signal,
     });
     
     clearTimeout(timeoutId);
